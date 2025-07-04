@@ -1,6 +1,10 @@
-# Sentinela Exam Gateway
+# sentinela Exam Gateway  
+Cloud Run Microservice to receive, validate, and process medical exams
 
-This is the core gateway microservice of the Sentinela diagnostic system. It acts as a RESTful service built using [Actix Web](https://actix.rs/), designed to receive medical exam data (e.g., X-rays, ECGs) from external hospitals and route them through a standardized validation, processing, and publishing pipeline.
+---
+
+This is a microservice of the sentinela diagnostic system.  
+It acts as a RESTful service built using [Actix Web](https://actix.rs/), designed to receive medical exam data (e.g., X-rays, ECGs) from external hospitals and route them through a standardized validation, processing, and publishing pipeline.
 
 ---
 
@@ -11,7 +15,7 @@ This is the core gateway microservice of the Sentinela diagnostic system. It act
 - **Saves** images/data to **Google Cloud Storage**
 - **Publishes** metadata and references to **Google Cloud Pub/Sub**
 - **Responds** only after all steps succeed or returns precise error information
-- **Deployed via Docker** and **GitHub Actions** to Google Cloud Run
+- **Deployed via Docker** and **GitHub Actions** to Google Cloud Run to the dev and/or production environments
 
 ---
 
@@ -48,7 +52,11 @@ This is the core gateway microservice of the Sentinela diagnostic system. It act
 Each type of exam will be submitted through a dedicated REST endpoint, for example:
 - POST: /exam/ecg
 - POST: /exam/xray
-  These endpoints are individually validated and processed based on exam-specific rules.
+- POST: /exam/ct
+- POST: /exam/mri
+- POST: /exam/ultrasound
+
+These endpoints are individually validated and processed based on exam-specific rules.
 
 ---
 
@@ -65,7 +73,7 @@ Each incoming request goes through the following stages:
     - X-ray: resize and convert image
     - ECG: normalize and reshape into Parquet
 5. **Storage**
-    - Upload PNG/Parquet to Google Cloud Storage
+    - Upload PNG/Parquet to Google Cloud Storage specific bucket
 6. **Publishing**
     - Publish exam metadata to Pub/Sub
 7. **Response**
@@ -80,15 +88,27 @@ To run locally and automatically lint during development:
 
 ```bash
 cargo watch -x 'clippy'
-```
+```  
 
+---
 
 ## ✅ Testing
-
-Add unit tests in appropriate modules. Run all tests:
+ 
+Unit tests in respective modules.  
+Run all tests:
 ```bash
 cargo test
 ```
+Run specific test:
+```bash
+cargo test <test_name>
+```
+To run all tests in a specific module, use:
+```bash
+cargo test <module_name>::
+```
+
+---
 
 ## 🚀 Deployment
 
@@ -97,7 +117,7 @@ Deployment is automated via GitHub Actions:
 - Builds Docker image
 - Deploys to Google Cloud Run if tests pass
 
-⸻
+---
 
 ## 🐳 Docker
 
@@ -105,8 +125,8 @@ To build and run locally using Docker:
 
 # ??REVIEW??
 ```bash 
-docker build -t sentinela-gateway .
-docker run -p 8080:8080 sentinela-gateway
+docker .....
+docker .....
 ```
 
 ## ❌ Error Handling
