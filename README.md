@@ -32,7 +32,7 @@ It acts as a RESTful service built using [Actix Web](https://actix.rs/), designe
     - ECG data → Parquet
 - Pub/Sub publishing of processed exam metadata
 - Modular and type-specific routing
-- Full error tracking and response per step
+- Full error tracking and response per step 
 
 ---
 
