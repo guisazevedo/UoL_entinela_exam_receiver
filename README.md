@@ -50,11 +50,11 @@ It acts as a RESTful service built using [Actix Web](https://actix.rs/), designe
 ## 📌 Routes Overview
 
 Each type of exam will be submitted through a dedicated REST endpoint, for example:
-- POST: /exam/ecg
-- POST: /exam/xray
-- POST: /exam/ct
-- POST: /exam/mri
-- POST: /exam/ultrasound
+- POST: /exam/ecg (under construction)
+- POST: /exam/xray (under construction)
+- POST: /exam/ct (not implemented yet)
+- POST: /exam/mri (not implemented yet)
+- POST: /exam/ultrasound (not implemented yet)
 
 These endpoints are individually validated and processed based on exam-specific rules.
 
