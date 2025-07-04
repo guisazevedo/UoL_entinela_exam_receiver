@@ -6,6 +6,7 @@
 use actix_web::{App, HttpServer, dev::ServiceRequest, web};
 
 // Internal Modules
+mod routes;
 
 
 // Global variables ********************************************************************************
@@ -27,19 +28,4 @@ async fn main() ->std::io::Result<()> {
         .bind(format!("{HOST}:{PORT}"))?
         .run()
         .await
-}
-
-
-
-// FIXME - to test only
-mod routes {
-    use actix_web::{web, HttpResponse};
-
-    pub fn config(cfg: &mut web::ServiceConfig) {
-        cfg.route("/", web::get().to(index));
-    }
-
-    async fn index() -> HttpResponse {
-        HttpResponse::Ok().body("Hello, World!")
-    }
 }
