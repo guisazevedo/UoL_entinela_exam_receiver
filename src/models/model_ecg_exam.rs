@@ -8,6 +8,7 @@ use validator::{Validate, ValidationError};
 
 // Data Model for the ECG exam *********************************************************************
 #[derive(Debug, Serialize, Deserialize, Validate, Clone)]
+#[serde(deny_unknown_fields)]
 /// Data Model for the ECG exam
 /// # Arguments
 /// * `patient_id` - A string representing the patient id (SHA256 hash)

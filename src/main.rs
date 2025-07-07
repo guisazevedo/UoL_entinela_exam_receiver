@@ -1,4 +1,4 @@
-// TODO - create a proper redis -> persistent storage connection for rate limiting
+// TODO - create a proper redis -> persistent storage connection for rate limiting total and per user/IP
 // TODO - github actions -> GCP
 // TODO - virus scanner
 // TODO - cxray main routes -> POST
@@ -9,7 +9,7 @@
 
 // Imports *****************************************************************************************
 // External Crates
-use actix_web::{web, App, HttpServer};
+use actix_web::{mime, web, App, HttpServer};
 use log::{info};
 
 // Internal Modules
@@ -37,7 +37,9 @@ async fn main() ->std::io::Result<()> {
     HttpServer::new(move || {
         println!("Server is running on https://{HOST}:{PORT}");
     App::new()
-        .app_data(web::JsonConfig::default().limit(SIZE_LIMIT))
+        .app_data(web::JsonConfig::default()
+            .limit(SIZE_LIMIT)
+            .content_type(|mime| {mime == mime::APPLICATION_JSON}))
         .configure(routes::config)
     })
         .workers(num_cpus::get())
