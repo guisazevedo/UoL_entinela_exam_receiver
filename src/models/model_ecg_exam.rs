@@ -99,12 +99,18 @@ fn validate_sha256(patient_id: &str) -> Result<(), ValidationError> {
 /// # Returns
 /// * A Result containing a unit type or a ValidationError
 fn validate_ecg_leads(values: &Vec<f32>) -> Result<(), ValidationError> {
+    // Check if the length of the leads is exactly 5000 samples
     if values.len() != 5000 {
         return Err(ValidationError::new("Leads must contain exactly 5000 samples"));
     }
+    // Check if the values are within the valid range
     let max_amplitude = 2.0;
     if values.iter().any(|&v| v.abs() > max_amplitude) {
         return Err(ValidationError::new("Leads values must be between -2.0 and 2.0"));
+    }
+    // Check if the patient is not flat-line
+    if values.iter().all(|&v| v == 0.0) {
+        return Err(ValidationError::new("Leads cannot be flat-line (all values are zero)"));
     }
     Ok(())
     }
