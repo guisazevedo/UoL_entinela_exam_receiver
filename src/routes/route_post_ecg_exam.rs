@@ -28,7 +28,7 @@ pub async fn ecg_exam_handler(payload: web::Json<Payload>) -> Result<HttpRespons
 
     // STEP 2: Extract data from payload and process it
     let data = payload.into_inner();
-    match handle_ecg_exam(data) {
+    match handle_ecg_exam(data).await {
         Ok(_) => {
             info!("End of the route handler for the ECG exam processing - Success");
             Ok(HttpResponse::Ok().json(json!({ "status": "ECG Exam Processed Successfully" })))
