@@ -11,7 +11,8 @@ use polars::io::json::JsonReader;
 use polars::io::parquet::{ParquetWriter, ZstdLevel};
 use std::io::Cursor;
 use google_cloud_storage::client::{Client, ClientConfig};
-
+use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
+use std::borrow::Cow;
 
 // Internal Modules
 use crate::models::model_ecg_exam::{Payload};
@@ -113,7 +114,7 @@ async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
     // Save ECG exam data to persistent storage as parquet -> GCP Cloud Storage
     // STEP 1: create the unique file name
     dotenv().ok();
-    let _bucket_name = std::env::var("BUCKET_NAME")?;
+    let bucket_name = std::env::var("BUCKET_NAME")?;
     // TODO -> define environment variable for bucket name
     let exam_type = "ecg_exam"; // This can be dynamic based on the exam type
     let hospital_id = data.get("hospital_id")
@@ -125,14 +126,15 @@ async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
     let timestamp = data.get("timestamp")
         .and_then(|v| v.as_str())
         .expect("timestamp was not set");
-    let _object_name = format!(
+    let object_name = format!(
         "{}/{}/{}/{}.parquet",
         exam_type, hospital_id, patient_id, timestamp
     );
 
     // STEP 2: Convert the data to Parquet format
     // Convert to json string
-    let json = serde_json::to_string(&data)?;
+    // let json = serde_json::to_string(&data)?;
+    let json = serde_json::to_string(&vec![data])?; // wrap in Vec to get a record batch
     // read into a polars DataFrame
     let mut df = JsonReader::new(Cursor::new(json))
         .infer_schema_len(None)
@@ -145,7 +147,21 @@ async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
 
     // STEP 3: Upload the Parquet file to GCP Cloud Storage
     let config = ClientConfig::default().with_auth().await?;
-    let _client = Client::new(config);
+    let client = Client::new(config);
+
+    let media = Media::new(Cow::Owned(object_name.clone()));
+    let upload_type = UploadType::Simple(media);
+
+    client
+        .upload_object(
+            &UploadObjectRequest {
+                bucket: bucket_name,
+                ..Default::default()
+            },
+            buffer,
+            &upload_type,
+        )
+        .await?;
 
     Ok(())
 }
