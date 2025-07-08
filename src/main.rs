@@ -23,7 +23,7 @@ mod utils;
 // Connection Constants
 pub const PORT: u16 = 8080;
 pub const HOST: &str = "0.0.0.0";
-pub const SIZE_LIMIT: usize = 512_000; // 500 KB
+pub const POST_SIZE_LIMIT: usize = 512_000; // 500 KB
 
 
 // Main ********************************************************************************************
@@ -38,7 +38,7 @@ async fn main() ->std::io::Result<()> {
         println!("Server is running on https://{HOST}:{PORT}");
     App::new()
         .app_data(web::JsonConfig::default()
-            .limit(SIZE_LIMIT)
+            .limit(POST_SIZE_LIMIT)
             .content_type(|mime| {mime == mime::APPLICATION_JSON}))
         .configure(routes::config)
     })

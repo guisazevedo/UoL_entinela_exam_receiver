@@ -5,6 +5,8 @@ use validator::{Validate, ValidationError};
 
 // Internal Modules
 
+// Constants ***************************************************************************************
+pub const ECG_LEAD_LENGTH: usize = 5000; // Length of each ECG lead
 
 // Data Model for the ECG exam *********************************************************************
 #[derive(Debug, Serialize, Deserialize, Validate, Clone)]
@@ -100,9 +102,9 @@ fn validate_sha256(patient_id: &str) -> Result<(), ValidationError> {
 /// # Returns
 /// * A Result containing a unit type or a ValidationError
 fn validate_ecg_leads(values: &Vec<f32>) -> Result<(), ValidationError> {
-    // Check if the length of the leads is exactly 5000 samples
-    if values.len() != 5000 {
-        return Err(ValidationError::new("Leads must contain exactly 5000 samples"));
+    // Check if the length of the leads is exactly ECG_LEAD_LENGTH samples
+    if values.len() != ECG_LEAD_LENGTH {
+        return Err(ValidationError::new("Leads must contain exactly ECG_LEAD_LENGTH samples"));
     }
     // Check if the values are within the valid range
     let max_amplitude = 2.0;
