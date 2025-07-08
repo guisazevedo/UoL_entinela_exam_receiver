@@ -11,7 +11,7 @@ use polars::io::json::JsonReader;
 use polars::io::parquet::{ParquetWriter, ZstdLevel};
 use std::io::Cursor;
 use google_cloud_storage::client::{Client, ClientConfig};
-use google_cloud_storage::http::objects::upload::UploadObjectRequest;
+
 
 // Internal Modules
 use crate::models::model_ecg_exam::{Payload};
@@ -113,7 +113,7 @@ async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
     // Save ECG exam data to persistent storage as parquet -> GCP Cloud Storage
     // STEP 1: create the unique file name
     dotenv().ok();
-    let bucket_name = std::env::var("BUCKET_NAME").expect("BUCKET_NAME must be set in .env file");
+    let _bucket_name = std::env::var("BUCKET_NAME")?;
     // TODO -> define environment variable for bucket name
     let exam_type = "ecg_exam"; // This can be dynamic based on the exam type
     let hospital_id = data.get("hospital_id")
@@ -125,8 +125,8 @@ async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
     let timestamp = data.get("timestamp")
         .and_then(|v| v.as_str())
         .expect("timestamp was not set");
-    let file_name = format!(
-        "gs://{}/{}/{}/{}.parquet",
+    let _object_name = format!(
+        "{}/{}/{}/{}.parquet",
         exam_type, hospital_id, patient_id, timestamp
     );
 
@@ -144,23 +144,14 @@ async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
         .finish(&mut df)?;
 
     // STEP 3: Upload the Parquet file to GCP Cloud Storage
-    let config = match ClientConfig::default().with_auth().await {
-        Ok(cfg) => {
-            info!("GCP Client Config created successfully");
-            cfg
-        }
-        Err(e) => {
-            eprintln!("Error creating GCP client: {}", e);
-            return Err(anyhow::Error::new(e));
-        }
-    };
-    let client = Client::new(config);
+    let config = ClientConfig::default().with_auth().await?;
+    let _client = Client::new(config);
 
     Ok(())
 }
 
 /// Send the ECG exam data to PubSub for further processing
-fn send_to_pubsub(data: serde_json::Value) -> Result<()> {
+fn send_to_pubsub(_data: serde_json::Value) -> Result<()> {
     // Implement the logic to send data to PubSub for further processing
     Ok(())
 }
