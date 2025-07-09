@@ -1,0 +1,23 @@
+# Rust build artifacts
+target
+
+# Git repo
+.git
+
+# Editor files
+.vscode
+.idea
+
+# OS clutter
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docs and non-source
+*.md
+
+# Docker itself
+.dockerignore
+Dockerfile

@@ -153,8 +153,6 @@ async fn save_ecg_exam_data(
         .with_compression(ParquetCompression::Zstd(Some(ZstdLevel::try_new(1)?)))
         .finish(&mut df)?;
 
-
-
     // STEP 3: Upload the Parquet file to GCP Cloud Storage
     let media = Media::new(Cow::Owned(object_name));
     let upload_type = UploadType::Simple(media);

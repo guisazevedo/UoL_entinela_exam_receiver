@@ -12,6 +12,9 @@ jobs:
   build-and-push:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}  # Only run if rust_compile_tests succeeded
     runs-on: ubuntu-latest
+    env:
+      BUCKET_NAME: ${{ variables.BUCKET_NAME }}  # Secret must contain the bucket name
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}  # Secret must contain GCP service account key JSON
 
     steps:
       - name: Checkout code
@@ -32,6 +35,9 @@ jobs:
 
       - name: Build and push Docker image  # Build your Docker image and push to Artifact Registry
         run: |
-          docker build -t us-central1-docker.pkg.dev/sentinela-diagnosis-dev/Images for sentinela-diagnosis-dev-docker-repo/exam_gateway:latest .  
+          docker build \
+            --build-arg BUCKET_NAME=$BUCKET_NAME \
+            --build-arg GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS \
+            -t us-central1-docker.pkg.dev/sentinela-diagnosis-dev/Images for sentinela-diagnosis-dev-docker-repo/exam_gateway:latest .  
           docker push us-central1-docker.pkg.dev/sentinela-diagnosis-dev/Images for sentinela-diagnosis-dev-docker-repo/exam_gateway:latest
         # TODO -> needs to be a variable for flavours
