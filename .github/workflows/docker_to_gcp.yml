@@ -7,9 +7,8 @@ on:
 #    workflows: ["rust_compile_tests"]
 #    types:
 #      - completed
-
   push:
-    branches: [ "**" ]  # Trigger on pushes to any branch
+    branches: [ "dev" ]  # Trigger on pushes to any branch
 
 jobs:
   build-and-push:

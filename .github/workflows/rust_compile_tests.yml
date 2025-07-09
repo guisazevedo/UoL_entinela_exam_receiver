@@ -4,9 +4,9 @@ name: rust_compile_tests
 # Trigger this workflow on pushes and pull requests to any branch
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "**" ]
+    branches: [ "main" ]
 
 # Get colorized output in the GitHub Actions logs
 env:
