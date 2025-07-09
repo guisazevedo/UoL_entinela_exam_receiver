@@ -3129,6 +3129,7 @@ dependencies = [
  "google-cloud-storage",
  "log",
  "num_cpus",
+ "once_cell",
  "polars",
  "serde",
  "serde_json",
