@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM rust:1.75 AS builder
+FROM rust:1.78 AS builder
 
 # Create a new empty shell project
 RUN USER=root cargo new --bin exam_gateway
