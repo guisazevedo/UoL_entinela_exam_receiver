@@ -1,14 +1,18 @@
-name: Rust compile and tests
+# Name of this workflow file
+name: rust_compile_tests
 
+# Trigger this workflow on pushes and pull requests to any branch
 on:
   push:
     branches: [ "**" ]
   pull_request:
     branches: [ "**" ]
 
+# Get colorized output in the GitHub Actions logs
 env:
   CARGO_TERM_COLOR: always
 
+# Define the jobs that will run in this workflow
 jobs:
   build:
 
