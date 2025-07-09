@@ -8,14 +8,14 @@ on:
 #    types:
 #      - completed
   push:
-    branches: [ "dev" ]  # Trigger on pushes to any branch
+    branches: [ "**" ]  # Trigger on pushes to any branch
 
 jobs:
   build-and-push:
     #if: ${{ github.event.workflow_run.conclusion == 'success' }}  # Only run if rust_compile_tests succeeded
     runs-on: ubuntu-latest
     env:
-      BUCKET_NAME: ${{ variables.BUCKET_NAME }}  # Secret must contain the bucket name
+      BUCKET_NAME: ${{ vars.BUCKET_NAME }}  # Secret must contain the bucket name
       GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}  # Secret must contain GCP service account key JSON
 
     steps:
