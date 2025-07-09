@@ -26,7 +26,6 @@ pub async fn ecg_exam_handler(
     pubsub_client: web::Data<Arc<PubSubClient>>,
 ) -> Result<HttpResponse, Error> {
     info!("Starting the route handler for the ECG exam processing");
-    println!("ENTERED HANDLER");
 
     // STEP 1: Validate the payload
     if let Err(e) = payload.validate() {
@@ -36,7 +35,6 @@ pub async fn ecg_exam_handler(
 
     // STEP 2: Extract data from payload and process it
     let data = payload.into_inner();
-    println!("Calling handle_ecg_exam");
     match handle_ecg_exam(data, &gcs_client, &pubsub_client).await {
         Ok(_) => {
             info!("End of the route handler for the ECG exam processing - Success");

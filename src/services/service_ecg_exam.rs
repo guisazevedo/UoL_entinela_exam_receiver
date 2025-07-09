@@ -11,9 +11,10 @@ use polars::io::parquet::{ParquetWriter, ZstdLevel};
 use std::io::Cursor;
 use google_cloud_storage::client::{Client as GcsClient};
 use google_cloud_pubsub::client::{Client as PubSubClient};
+use google_cloud_googleapis::pubsub::v1::PubsubMessage;
+use std::sync::Arc;
 use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
 use std::borrow::Cow;
-use actix_web::rt::time::Instant;
 
 // Internal Modules
 use crate::models::model_ecg_exam::{Payload};
@@ -99,7 +100,7 @@ fn preprocess_ecg_data(data: Payload) -> Result<HashMap<String, serde_json::Valu
 
     // STEP 3: Create the ECG exam data structure for PubSub
     let ecg_exam_pubsub = EcgExamPubSub {
-        topic: "ecg_exam_topic".to_string(),
+        topic: "topic-ecg-dev".to_string(), // TODO -> discuss topic name for dev/prod
         exam_type: "ECG Exam".to_string(),
         timestamp: utc_timestamp_string,
         patient_id: data.patient_id.clone(),
@@ -125,7 +126,7 @@ async fn save_ecg_exam_data(
     let bucket_name = std::env::var("BUCKET_NAME")?;
     // TODO -> define environment variable for bucket name
     let exam_type = "ecg_exam";
-    let hospital_id = data.get("hospital_id")
+    let hospital_id = data.get("hospital_id") // TODO -> review error handling
         .and_then(|v| v.as_str())
         .expect("hospital_id was not set");
     let patient_id = data.get("patient_id")
@@ -174,10 +175,34 @@ async fn save_ecg_exam_data(
 
 /// Send the ECG exam data to PubSub for further processing
 async fn send_to_pubsub(
-    _data: serde_json::Value,
-    _pubsub_client: &Arc<PubSubClient>,
+    data: serde_json::Value,
+    pubsub_client: &Arc<PubSubClient>,
 ) -> Result<()> {
-    // Implement the logic to send data to PubSub for further processing
+    // STEP 1: Extract the topic and message from the data
+    let topic_name = data.get("topic")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| anyhow::anyhow!("topic was not set"))?; // TODO -> deal error handling
+
+    // STEP 2: Create the PubSub message as JSON string
+    let payload = serde_json::to_string(&data)?;
+
+    // STEP 3: Get the topic and create a publisher
+    let topic = pubsub_client.topic(topic_name);
+    let publisher = topic.new_publisher(None);
+
+    // STEP 4: Create the PubSub message and publish it
+    // let mut message = google_cloud_pubsub::publisher::PubsubMessage::default();
+    let mut message = PubsubMessage {
+        data: payload.clone().into_bytes(),
+        attributes: Default::default(),
+        message_id: "".to_string(),
+        publish_time: None,
+        ordering_key: "".to_string(),
+    };
+    message.data = payload.into_bytes();
+    publisher.publish(message).await.get().await?; // TODO -> review...
+
+
     Ok(())
 }
 
