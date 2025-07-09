@@ -5,12 +5,12 @@ use log::{info};
 use serde::Serialize;
 use chrono;
 use std::collections::HashMap;
-use dotenv::dotenv;
 use polars::prelude::*;
 use polars::io::json::JsonReader;
 use polars::io::parquet::{ParquetWriter, ZstdLevel};
 use std::io::Cursor;
-use google_cloud_storage::client::{Client, ClientConfig};
+use google_cloud_storage::client::{Client as GcsClient};
+use google_cloud_pubsub::client::{Client as PubSubClient};
 use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
 use std::borrow::Cow;
 use actix_web::rt::time::Instant;
@@ -27,22 +27,26 @@ use crate::models::model_ecg_exam::{Payload};
 /// * A Result indicating success or failure of the operation
 /// /// # Errors
 /// * Returns an error if any step in the processing fails
-pub async  fn handle_ecg_exam(data: Payload) -> Result<()> {
+pub async  fn handle_ecg_exam(
+    data: Payload,
+    gcs_client: &Arc<GcsClient>,
+    pubsub_client: &Arc<PubSubClient>,
+) -> Result<()> {
 
     // STEP 1: Pre-process the data
     let prep_data = preprocess_ecg_data(data)?;
 
     // STEP 2: Save ECG exam data to persistent storage
     let parquet = prep_data.get("parquet")
-        .unwrap() // DOCUMENTATION -> unwrap is safe here as we control the data flow at hashmap creation below
+        .unwrap() // DOCUMENTATION -> safe given data flow at hashmap creation below
         .clone();
-    save_ecg_exam_data(parquet).await?;
+    save_ecg_exam_data(parquet, gcs_client).await?;
 
     // STEP 3: Send to PubSub for further processing
     let pubsub_data = prep_data.get("pubsub")
-        .unwrap() // DOCUMENTATION -> unwrap is safe here as we control the data flow at hashmap creation below
+        .unwrap() // DOCUMENTATION -> safe given data flow at hashmap creation below
         .clone();
-    send_to_pubsub(pubsub_data).await?;
+    send_to_pubsub(pubsub_data, pubsub_client).await?;
 
     // STEP 4: Return success response
     info!("ECG exam successfully processed");
@@ -111,13 +115,13 @@ fn preprocess_ecg_data(data: Payload) -> Result<HashMap<String, serde_json::Valu
 }
 
 /// Save the ECG exam data to persistent storage
-async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
-
-    let t0 = Instant::now();
+async fn save_ecg_exam_data(
+    data: serde_json::Value,
+    gcs_client: &Arc<GcsClient>,
+) -> Result<()> {
 
     // Save ECG exam data to persistent storage as parquet -> GCP Cloud Storage
     // STEP 1: create the unique file name
-    dotenv().ok();
     let bucket_name = std::env::var("BUCKET_NAME")?;
     // TODO -> define environment variable for bucket name
     let exam_type = "ecg_exam";
@@ -134,9 +138,7 @@ async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
         "{}/{}/{}/{}.parquet",
         exam_type, hospital_id, patient_id, timestamp
     );
-    println!("File name took: {:?}", t0.elapsed());
 
-    let t1 = Instant::now();
     // STEP 2: Convert the data to Parquet format
     // Convert to json string
     let json = serde_json::to_string(&vec![data])?;
@@ -147,21 +149,16 @@ async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
     // Write the DataFrame to Parquet buffer
     let mut buffer = Vec::new();
     ParquetWriter::new(&mut buffer)
-        .with_compression(ParquetCompression::Zstd(Some(ZstdLevel::try_new(5)?)))
+        .with_compression(ParquetCompression::Zstd(Some(ZstdLevel::try_new(1)?)))
         .finish(&mut df)?;
-    println!("Parquet conversion took: {:?}", t1.elapsed());
 
-    let t2 = Instant::now();
+
 
     // STEP 3: Upload the Parquet file to GCP Cloud Storage
-    let config = ClientConfig::default().with_auth().await?;
-    let client = Client::new(config);
-
-
     let media = Media::new(Cow::Owned(object_name));
     let upload_type = UploadType::Simple(media);
 
-    client
+    gcs_client
         .upload_object(
             &UploadObjectRequest {
                 bucket: bucket_name,
@@ -171,13 +168,15 @@ async fn save_ecg_exam_data(data: serde_json::Value) -> Result<()> {
             &upload_type,
         )
         .await?;
-    println!("GCP upload took: {:?}", t2.elapsed());
 
     Ok(())
 }
 
 /// Send the ECG exam data to PubSub for further processing
-async fn send_to_pubsub(_data: serde_json::Value) -> Result<()> {
+async fn send_to_pubsub(
+    _data: serde_json::Value,
+    _pubsub_client: &Arc<PubSubClient>,
+) -> Result<()> {
     // Implement the logic to send data to PubSub for further processing
     Ok(())
 }

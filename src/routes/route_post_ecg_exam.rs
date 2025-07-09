@@ -4,10 +4,13 @@ use actix_web::{post, web, HttpResponse, Error};
 use serde_json::json;
 use validator::Validate;
 use log::{error, info};
+use std::sync::Arc;
 
 // Internal Modules
 use crate::models::model_ecg_exam::Payload;
 use crate::services::service_ecg_exam::{handle_ecg_exam};
+use google_cloud_storage::client::{Client as GcsClient};
+use google_cloud_pubsub::client::{Client as PubSubClient};
 
 // Route Handlers ***********************************************************************************
 // Health Check Handler
@@ -17,8 +20,13 @@ use crate::services::service_ecg_exam::{handle_ecg_exam};
 /// * `payload` - A JSON object containing the data of the patient
 /// # Returns
 /// * An HttpResponse containing a 200 OK status if the ECG exam is processed successfully
-pub async fn ecg_exam_handler(payload: web::Json<Payload>) -> Result<HttpResponse, Error> {
+pub async fn ecg_exam_handler(
+    payload: web::Json<Payload>,
+    gcs_client: web::Data<Arc<GcsClient>>,
+    pubsub_client: web::Data<Arc<PubSubClient>>,
+) -> Result<HttpResponse, Error> {
     info!("Starting the route handler for the ECG exam processing");
+    println!("ENTERED HANDLER");
 
     // STEP 1: Validate the payload
     if let Err(e) = payload.validate() {
@@ -28,7 +36,8 @@ pub async fn ecg_exam_handler(payload: web::Json<Payload>) -> Result<HttpRespons
 
     // STEP 2: Extract data from payload and process it
     let data = payload.into_inner();
-    match handle_ecg_exam(data).await {
+    println!("Calling handle_ecg_exam");
+    match handle_ecg_exam(data, &gcs_client, &pubsub_client).await {
         Ok(_) => {
             info!("End of the route handler for the ECG exam processing - Success");
             Ok(HttpResponse::Ok().json(json!({ "status": "ECG Exam Processed Successfully" })))

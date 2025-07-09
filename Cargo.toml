@@ -16,6 +16,7 @@ chrono = "0.4.41"
 dotenv = "0.15.0"
 polars = { version = "0.39", features = ["parquet", "serde", "json"] }
 google-cloud-storage = "0.13"
+google-cloud-pubsub = "0.18"
 google-cloud-auth = "0.13"
 google-cloud-default = "0.4.0"
 bytes = "1.10.1"
