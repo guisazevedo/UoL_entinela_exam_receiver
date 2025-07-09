@@ -40,6 +40,6 @@ jobs:
           docker build \
             --build-arg BUCKET_NAME=$BUCKET_NAME \
             --build-arg GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS \
-            -t us-central1-docker.pkg.dev/sentinela-diagnosis-dev/Images for sentinela-diagnosis-dev-docker-repo/exam_gateway:latest .  
-          docker push us-central1-docker.pkg.dev/sentinela-diagnosis-dev/Images for sentinela-diagnosis-dev-docker-repo/exam_gateway:latest
+            -t us-central1-docker.pkg.dev/sentinela-diagnosis-dev/Images
+          docker push us-central1-docker.pkg.dev/sentinela-diagnosis-dev/Images
         # TODO -> needs to be a variable for flavours
