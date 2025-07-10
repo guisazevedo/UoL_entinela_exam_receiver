@@ -24,7 +24,13 @@ RUN cargo build --release
 FROM debian:bookworm-slim
 
 # Install libss13 (needed for OpenSSL3)
-RUN apt-get update && apt-get install -y libssl3 && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && apt-get install -y libssl3 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y libssl3 ca-certificates && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Set the RUST_LOG environment variable
 ENV DOCKER_ENV=true

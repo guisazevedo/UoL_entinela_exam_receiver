@@ -3,17 +3,19 @@ name: Build and Push to GCP
 
 # Trigger this workflow only after 'rust_compile_tests' completes
 on:
-  workflow_run:
-    workflows: ["rust_compile_tests"]
-    types:
-      - completed
+#  workflow_run:
+#    workflows: ["rust_compile_tests"]
+#    types:
+#      - completed
+  push:
+    branches: [ "**" ]  # Trigger on pushes to any branch
 
 jobs:
   build-and-push:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}  # Only run if rust_compile_tests succeeded
+    #if: ${{ github.event.workflow_run.conclusion == 'success' }}  # Only run if rust_compile_tests succeeded
     runs-on: ubuntu-latest
     env:
-      BUCKET_NAME: ${{ variables.BUCKET_NAME }}  # Secret must contain the bucket name
+      BUCKET_NAME: ${{ vars.BUCKET_NAME }}  # Secret must contain the bucket name
       GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}  # Secret must contain GCP service account key JSON
 
     steps:
@@ -33,11 +35,12 @@ jobs:
           gcloud auth configure-docker us-central1-docker.pkg.dev
       # TODO -> needs to be a variable for flavours
 
-      - name: Build and push Docker image  # Build your Docker image and push to Artifact Registry
+      - name: Build and push Docker image
         run: |
           docker build \
             --build-arg BUCKET_NAME=$BUCKET_NAME \
             --build-arg GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS \
-            -t us-central1-docker.pkg.dev/sentinela-diagnosis-dev/Images for sentinela-diagnosis-dev-docker-repo/exam_gateway:latest .  
-          docker push us-central1-docker.pkg.dev/sentinela-diagnosis-dev/Images for sentinela-diagnosis-dev-docker-repo/exam_gateway:latest
-        # TODO -> needs to be a variable for flavours
+            -t us-central1-docker.pkg.dev/sentinela-diagnosis-dev/sentinela-diagnosis-dev-docker-repo/exam_gateway:latest .
+
+          docker push us-central1-docker.pkg.dev/sentinela-diagnosis-dev/sentinela-diagnosis-dev-docker-repo/exam_gateway:latest
+        # TODO -> needs to be a variable for flavours.

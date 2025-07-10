@@ -34,15 +34,18 @@ pub async  fn handle_ecg_exam(
     pubsub_client: &Arc<PubSubClient>,
 ) -> Result<()> {
 
+    println!("Handling ECR payload - pre-processing the data");
     // STEP 1: Pre-process the data
     let prep_data = preprocess_ecg_data(data)?;
 
+    println!("Handling ECR payload - pre-processing the data - done");
     // STEP 2: Save ECG exam data to persistent storage
     let parquet = prep_data.get("parquet")
         .unwrap() // DOCUMENTATION -> safe given data flow at hashmap creation below
         .clone();
     save_ecg_exam_data(parquet, gcs_client).await?;
 
+    println!("Handling ECR payload - pre-processing the data - done - parquet saved");
     // STEP 3: Send to PubSub for further processing
     let pubsub_data = prep_data.get("pubsub")
         .unwrap() // DOCUMENTATION -> safe given data flow at hashmap creation below
