@@ -30,6 +30,8 @@ RUN apt-get update && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+
 # Set the RUST_LOG environment variable
 ENV DOCKER_ENV=true
 
