@@ -34,18 +34,18 @@ pub async  fn handle_ecg_exam(
     pubsub_client: &Arc<PubSubClient>,
 ) -> Result<()> {
 
-    println!("Handling ECR payload - pre-processing the data");
+    println!("Handling ECG payload - pre-processing the data");
     // STEP 1: Pre-process the data
     let prep_data = preprocess_ecg_data(data)?;
 
-    println!("Handling ECR payload - pre-processing the data - done");
+    println!("Handling ECG payload - pre-processing the data - done");
     // STEP 2: Save ECG exam data to persistent storage
     let parquet = prep_data.get("parquet")
         .unwrap() // DOCUMENTATION -> safe given data flow at hashmap creation below
         .clone();
     save_ecg_exam_data(parquet, gcs_client).await?;
 
-    println!("Handling ECR payload - pre-processing the data - done - parquet saved");
+    println!("Handling ECG payload - pre-processing the data - done - parquet saved");
     // STEP 3: Send to PubSub for further processing
     let pubsub_data = prep_data.get("pubsub")
         .unwrap() // DOCUMENTATION -> safe given data flow at hashmap creation below
@@ -96,7 +96,7 @@ fn preprocess_ecg_data(data: Payload) -> Result<HashMap<String, serde_json::Valu
 
     // STEP 2: Create the ECG exam data structure for Parquet storage
     let ecg_exam_parquet = EcgExamParquet {
-        exam_type: "ECG Exam".to_string(),
+        exam_type: "ECG_Exam".to_string(),
         timestamp: utc_timestamp_string.clone(),
         data: data.clone(),
     };
@@ -186,6 +186,8 @@ async fn send_to_pubsub(
 
     // STEP 2: Create the PubSub message as JSON string
     let payload = serde_json::to_string(&data)?;
+
+    println!("Data to be sent to PubSub: {}", payload);
 
     // STEP 3: Get the topic and create a publisher
     let topic = pubsub_client.topic(topic_name);
