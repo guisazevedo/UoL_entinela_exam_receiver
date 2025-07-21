@@ -24,6 +24,8 @@ use crate::models::model_ecg_exam::{Payload};
 /// Handles the processing of an ECG exam data from processing to storage and PubSub
 /// # Arguments
 /// * `data` - A Payload struct containing the validated data of the ECG exam
+/// * `gcs_client` - An Arc reference to the GCS client for storage operations
+/// * `pubsub_client` - An Arc reference to the PubSub client for message publishing
 /// /// # Returns
 /// * A Result indicating success or failure of the operation
 /// /// # Errors
