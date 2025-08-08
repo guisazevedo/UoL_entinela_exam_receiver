@@ -24,11 +24,11 @@ jobs:
         run: |
           cargo llvm-cov --lcov --output-path lcov.info
 
-            - name: 🔧 Normalize coverage paths
-              run: |
-                sed -i 's|SF:.*/src/|SF:src/|' lcov.info
-                echo "✅ Normalized paths in lcov.info"
-                head -n 10 lcov.info
+      - name: 🔧 Normalize coverage paths
+        run: |
+          sed -i 's|SF:.*/src/|SF:src/|' lcov.info
+          echo "✅ Normalized paths in lcov.info"
+          head -n 10 lcov.info
 
 #      - name: 🔧 Normalize coverage paths
 #        run: |
