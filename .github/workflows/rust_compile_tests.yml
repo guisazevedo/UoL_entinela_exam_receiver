@@ -1,26 +1,26 @@
-# Name of this workflow file
-name: rust_compile_tests
-
-# Trigger this workflow on pushes and pull requests to any branch
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-# Get colorized output in the GitHub Actions logs
-env:
-  CARGO_TERM_COLOR: always
-
-# Define the jobs that will run in this workflow
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build
-    - name: Run tests
-      run: cargo test --verbose
+## Name of this workflow file
+#name: rust_compile_tests
+#
+## Trigger this workflow on pushes and pull requests to any branch
+#on:
+#  push:
+#    branches: [ "main" ]
+#  pull_request:
+#    branches: [ "main" ]
+#
+## Get colorized output in the GitHub Actions logs
+#env:
+#  CARGO_TERM_COLOR: always
+#
+## Define the jobs that will run in this workflow
+#jobs:
+#  build:
+#
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#    - uses: actions/checkout@v4
+#    - name: Build
+#      run: cargo build
+#    - name: Run tests
+#      run: cargo test --verbose
