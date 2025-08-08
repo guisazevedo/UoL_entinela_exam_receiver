@@ -1,0 +1,49 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  sonarqube:
+    name: 🦀 Run Rust tests
+    runs-on: linux-latest
+
+    steps:
+      - name: 🛎️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🦀 Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 📦 Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
+
+      - name: 🧪 Run tests with coverage
+        run: |
+          cargo llvm-cov --lcov --output-path lcov.info
+
+            - name: 🔧 Normalize coverage paths
+              run: |
+                sed -i 's|SF:.*/src/|SF:src/|' lcov.info
+                echo "✅ Normalized paths in lcov.info"
+                head -n 10 lcov.info
+
+#      - name: 🔧 Normalize coverage paths
+#        run: |
+#          sed -i '' 's|SF:.*/src/|SF:src/|' lcov.info
+#          echo "✅ Normalized paths in lcov.info"
+#          head -n 10 lcov.info
+
+      - name: 🔍 Run SonarCloud analysis
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectVersion=${{ github.run_number }}
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}

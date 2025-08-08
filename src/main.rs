@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
 
     // Initialize logger
     env_logger::init();
-    info!("Starting the ActixWeb server");
+    info!("Starting the ActixWeb server: SENTINELA EXAM GATEWAY");
 
     // Initialize GCP clients once
     // GCS Client

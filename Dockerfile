@@ -32,7 +32,7 @@ RUN apt-get update && \
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
-# Set the RUST_LOG environment variable
+# Set the environment variable # TODO -> review this variable
 ENV DOCKER_ENV=true
 
 # Copy the build artifact from the builder stage
