@@ -36,7 +36,9 @@ jobs:
 #          echo "✅ Normalized paths in lcov.info"
 #          head -n 10 lcov.info
 
-      - name: 🔍 Run SonarCloud analysis
+      # ---- SonarCloud (PR) ----
+      - name: 🔍 SonarCloud PR analysis
+        if: github.event_name == 'pull_request'
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -44,6 +46,19 @@ jobs:
         with:
           args: >
             -Dsonar.projectVersion=${{ github.run_number }}
+            -Dsonar.rust.lcov.reportPaths=lcov.info
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
             -Dsonar.pullrequest.base=${{ github.base_ref }}
+
+      # ---- SonarCloud (main) ----
+      - name: 🔍 SonarCloud main analysis
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectVersion=${{ github.run_number }}
+            -Dsonar.rust.lcov.reportPaths=lcov.info
