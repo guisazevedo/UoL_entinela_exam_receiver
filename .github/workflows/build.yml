@@ -30,7 +30,7 @@ jobs:
           echo "✅ Normalized paths in lcov.info"
           head -n 10 lcov.info
 
-#      - name: 🔧 Normalize coverage paths
+#      - name: 🔧 Normalize coverage path
 #        run: |
 #          sed -i '' 's|SF:.*/src/|SF:src/|' lcov.info
 #          echo "✅ Normalized paths in lcov.info"
