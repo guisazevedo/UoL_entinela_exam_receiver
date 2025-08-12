@@ -206,22 +206,68 @@ async fn send_to_pubsub(
     };
     message.data = payload.into_bytes();
     publisher.publish(message).await.get().await?; // TODO -> review...
-
-
     Ok(())
 }
 
 // TESTS *******************************************************************************************
-// DOCUMENTATION -> for each function implement unit tests for:
-// * happy path
-// * sad path
-// * edge cases
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::models::model_ecg_exam::{Payload, ECG_LEAD_LENGTH};
+    use validator::Validate;
 
+    fn hex64(c: char) -> String { std::iter::repeat(c).take(64).collect() }
+    fn lead_ok() -> Vec<f32> {
+        let mut v = vec![0.0; ECG_LEAD_LENGTH];
+        v[0] = 0.5;
+        v
+    }
+    fn valid_payload() -> Payload {
+        Payload {
+            patient_id: hex64('a'),
+            hospital_id: hex64('b'),
+            hospital_key: hex64('c'),
+            lead_i: lead_ok(), lead_ii: lead_ok(), lead_iii: lead_ok(),
+            lead_avr: lead_ok(), lead_avl: lead_ok(), lead_avf: lead_ok(),
+            lead_v1: lead_ok(), lead_v2: lead_ok(), lead_v3: lead_ok(),
+            lead_v4: lead_ok(), lead_v5: lead_ok(), lead_v6: lead_ok(),
+        }
+    }
+
+    // Happy path: returns both entries with expected fields
     #[test]
-    /// Placeholder
-    fn test_preprocess_ecg_data() {
-        assert!(true);
+    fn preprocess_happy_path() {
+        let p = valid_payload();
+        assert!(p.validate().is_ok());
+
+        let map = preprocess_ecg_data(p.clone()).expect("preprocess ok");
+        assert!(map.contains_key("parquet"));
+        assert!(map.contains_key("pubsub"));
+
+        let parquet = map.get("parquet").unwrap();
+        assert_eq!(parquet.get("exam_type").unwrap().as_str().unwrap(), "ECG_Exam");
+        let ts = parquet.get("timestamp").unwrap().as_str().unwrap();
+        assert!(ts.ends_with('Z'));
+
+        // payload flattened under parquet
+        assert_eq!(parquet.get("patient_id").unwrap().as_str().unwrap(), p.patient_id);
+        assert_eq!(parquet.get("hospital_id").unwrap().as_str().unwrap(), p.hospital_id);
+
+        let pubsub = map.get("pubsub").unwrap();
+        assert_eq!(pubsub.get("topic").unwrap().as_str().unwrap(), "topic-ecg-dev");
+        assert_eq!(pubsub.get("exam_type").unwrap().as_str().unwrap(), "ECG Exam");
+        assert_eq!(pubsub.get("patient_id").unwrap().as_str().unwrap(), p.patient_id);
+        assert_eq!(pubsub.get("hospital_id").unwrap().as_str().unwrap(), p.hospital_id);
+    }
+
+    // Borderline‑ok: timestamp format parses with your custom fmt
+    #[test]
+    fn preprocess_timestamp_format() {
+        let map = preprocess_ecg_data(valid_payload()).unwrap();
+        let ts = map.get("parquet").unwrap().get("timestamp").unwrap().as_str().unwrap();
+        assert!(ts.ends_with('Z'));
+        let ts_no_z = &ts[..ts.len()-1];
+        let fmt = "%Y-%m-%dT%H%M%S%.f";
+        chrono::NaiveDateTime::parse_from_str(ts_no_z, fmt).expect("timestamp matches custom fmt");
     }
 }

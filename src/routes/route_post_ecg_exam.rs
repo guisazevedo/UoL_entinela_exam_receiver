@@ -48,3 +48,4 @@ pub async fn ecg_exam_handler(
 }
 
 // TESTS *******************************************************************************************
+// DOCUMENTATION: Pass function only - no unit tests for route handlers
