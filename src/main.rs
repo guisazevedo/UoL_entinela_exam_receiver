@@ -44,10 +44,10 @@ async fn main() -> std::io::Result<()> {
     // Initialize GCP clients once
     // GCS Client
     let gcs_client = init_gcs_client().await
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
     // PubSub Client
     let pubsub_client = init_pubsub_client().await
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
 
     // ActixWeb server initialization
     HttpServer::new(move || {

@@ -101,8 +101,10 @@ fn validate_sha256(patient_id: &str) -> Result<(), ValidationError> {
 /// * `leads` - A vector of f32 representing the ECG leads
 /// # Returns
 /// * A Result containing a unit type or a ValidationError
-fn validate_ecg_leads(values: &Vec<f32>) -> Result<(), ValidationError> {
-    // Check if the length of the leads is exactly ECG_LEAD_LENGTH samples
+fn validate_ecg_leads(values: &[f32]) -> Result<(), ValidationError> {
+    // fn validate_ecg_leads(values: &Vec<f32>) -> Result<(), ValidationError> { }
+
+        // Check if the length of the leads is exactly ECG_LEAD_LENGTH samples
     if values.len() != ECG_LEAD_LENGTH {
         return Err(ValidationError::new("Leads must contain exactly ECG_LEAD_LENGTH samples"));
     }
