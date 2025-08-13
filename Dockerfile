@@ -28,7 +28,7 @@ USER appuser
 # Install libss13 (needed for OpenSSL3)
 #RUN apt-get update && apt-get install -y libssl3 && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && \
-    apt-get install -y libssl3 ca-certificates && \
+    apt-get install -y --no-install-recommends libssl3 ca-certificates && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
