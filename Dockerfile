@@ -11,17 +11,19 @@ ENV GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS
 RUN USER=root cargo new --bin sentinela_exam_gateway
 WORKDIR /sentinela_exam_gateway
 
-# Copy the Cargo.toml and Cargo.lock files
-COPY Cargo.toml Cargo.lock ./
-
 # Copy the source code
-COPY . .
+COPY src ./src
+COPY Cargo.toml Cargo.lock ./
 
 # Build the application
 RUN cargo build --release
 
 # Stage 2: Create the final image
 FROM debian:bookworm-slim
+
+# Create a non-root user to run the application
+RUN useradd -m appuser
+USER appuser
 
 # Install libss13 (needed for OpenSSL3)
 #RUN apt-get update && apt-get install -y libssl3 && rm -rf /var/lib/apt/lists/*
@@ -32,7 +34,7 @@ RUN apt-get update && \
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
-# Set the environment variable # TODO -> review this variable
+# Set the environment variable
 ENV DOCKER_ENV=true
 
 # Copy the build artifact from the builder stage
