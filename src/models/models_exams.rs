@@ -2,6 +2,10 @@
 // External Crates
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
+use image::ImageReader;
+use std::io::Cursor;
 
 // Internal Modules
 
@@ -9,6 +13,7 @@ use validator::{Validate, ValidationError};
 pub const ECG_LEAD_LENGTH: usize = 5000; // Length of each ECG lead
 
 // MAIN FUNCTIONS AND STRUCTS **********************************************************************
+// Payload struct for the ECG exam data-------------------------------------------------------------
 #[derive(Debug, Serialize, Deserialize, Validate, Clone)]
 #[serde(deny_unknown_fields)]
 /// Data Model for the ECG exam
@@ -30,7 +35,7 @@ pub const ECG_LEAD_LENGTH: usize = 5000; // Length of each ECG lead
 /// * `lead_v6` - A vector of f32 representing the Lead V6 of the ECG exam
 /// # Returns
 /// * A Payload struct containing the data of the ECG exam
-pub struct Payload {
+pub struct PayloadEcg {
     // Patient id as a string - SHA256 hash
     #[validate(custom(function = "validate_sha256"))]
     pub patient_id: String,
@@ -81,6 +86,28 @@ pub struct Payload {
     pub lead_v6: Vec<f32>,
 }
 
+// Payload struct for the XRAY exam data -----------------------------------------------------------
+#[derive(Debug, Serialize, Deserialize, Validate, Clone)]
+#[serde(deny_unknown_fields)]
+/// Data Model for the XRAY exam
+pub struct PayloadXray {
+    // Patient id as a string - SHA256 hash
+    #[validate(custom(function = "validate_sha256"))]
+    pub patient_id: String,
+
+    // Hospital id as a string - SHA256 hash
+    #[validate(custom(function = "validate_sha256"))]
+    pub hospital_id: String,
+
+    // Hospital key as a string - SHA256 hash
+    #[validate(custom(function = "validate_sha256"))]
+    pub hospital_key: String,
+
+    // Image as a base64 encoded string
+    #[validate(custom(function = "validate_1024_base64_image"))]
+    pub image: String,
+}
+
 
 // SUPPORTING FUNCTIONS ****************************************************************************
 /// Custom validation function for SHA256 hash
@@ -102,9 +129,7 @@ fn validate_sha256(patient_id: &str) -> Result<(), ValidationError> {
 /// # Returns
 /// * A Result containing a unit type or a ValidationError
 fn validate_ecg_leads(values: &[f32]) -> Result<(), ValidationError> {
-    // fn validate_ecg_leads(values: &Vec<f32>) -> Result<(), ValidationError> { }
-
-        // Check if the length of the leads is exactly ECG_LEAD_LENGTH samples
+    // Check if the length of the leads is exactly ECG_LEAD_LENGTH samples
     if values.len() != ECG_LEAD_LENGTH {
         return Err(ValidationError::new("Leads must contain exactly ECG_LEAD_LENGTH samples"));
     }
@@ -119,6 +144,25 @@ fn validate_ecg_leads(values: &[f32]) -> Result<(), ValidationError> {
     }
     Ok(())
 }
+
+fn validate_1024_base64_image(base64_str: &str) -> Result<(), ValidationError> {
+    const IMAGE_SIZE: u32 = 1024;
+    // Bring it to raw bytes
+    let decoded = STANDARD.decode(base64_str).map_err(|_| ValidationError::new("invalid_base64"))?;
+    // read the image from the raw bytes
+    let img = ImageReader::new(Cursor::new(decoded))
+        .with_guessed_format()
+        .map_err(|_| ValidationError::new("invalid_image_format"))?
+        .decode()
+        .map_err(|_| ValidationError::new("decode_error"))?;
+    // Check if dimensions are IMAGE_SIZE by IMAGE_SIZE
+    if img.width() == IMAGE_SIZE && img.height() == IMAGE_SIZE {
+        Ok(())
+    } else {
+        Err(ValidationError::new("invalid_dimensions"))
+    }
+}
+
 
 // TESTS *******************************************************************************************
 #[cfg(test)]

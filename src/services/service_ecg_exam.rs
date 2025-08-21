@@ -17,7 +17,7 @@ use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, Up
 use std::borrow::Cow;
 
 // Internal Modules
-use crate::models::model_ecg_exam::{Payload};
+use crate::models::models_exams::{PayloadEcg};
 
 // Services ****************************************************************************************
 // Follow service protocol for handling ECG exam data
@@ -30,8 +30,8 @@ use crate::models::model_ecg_exam::{Payload};
 /// * A Result indicating success or failure of the operation
 /// # Errors
 /// * Returns an error if any step in the processing fails
-pub async  fn handle_ecg_exam(
-    data: Payload,
+pub async fn handler_ecg_exam(
+    data: PayloadEcg,
     gcs_client: &Arc<GcsClient>,
     pubsub_client: &Arc<PubSubClient>,
 ) -> Result<()> {
@@ -71,7 +71,7 @@ struct EcgExamParquet {
     exam_type: String,
     timestamp: String,
     #[serde(flatten)]
-    data: Payload,
+    data: PayloadEcg,
 }
 
 /// Struct to represent the ECG exam data in a format suitable for PubSub
@@ -91,7 +91,7 @@ struct EcgExamPubSub {
 }
 
 /// Pre-process the ECG data
-fn preprocess_ecg_data(data: Payload) -> Result<HashMap<String, serde_json::Value>> {
+fn preprocess_ecg_data(data: PayloadEcg) -> Result<HashMap<String, serde_json::Value>> {
     // STEP 1: Get name variables
     let utc_timestamp = chrono::Utc::now();
     let utc_timestamp_string = utc_timestamp.format("%Y-%m-%dT%H%M%S%.fZ").to_string();

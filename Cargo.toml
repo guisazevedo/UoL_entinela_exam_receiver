@@ -18,3 +18,5 @@ polars = { version = "0.39", features = ["parquet", "serde", "json"] }
 google-cloud-storage = "0.13"
 google-cloud-pubsub = "0.18"
 google-cloud-googleapis = "=0.10.0"
+base64 = "0.22.1"
+image = "0.25.6"

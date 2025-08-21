@@ -1,9 +1,6 @@
 // TODO - create a proper redis -> persistent storage connection for rate limiting total and per user/IP
 // TODO - github actions -> GCP
 // TODO - virus scanner
-// TODO - cxray main routes -> POST
-// TODO - cxray models
-// TODO - cxray full data validation
 // TODO - cxray data transformation
 
 // Imports *****************************************************************************************

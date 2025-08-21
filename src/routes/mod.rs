@@ -3,8 +3,10 @@
 use actix_web::web;
 
 // Internal Modules
-mod health_checker;
+pub mod health_checker;
 pub mod route_post_ecg_exam;
+pub mod route_post_xray_exam;
+
 
 // Router Configuration ****************************************************************************
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -15,6 +17,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             .service(health_checker::health_check_handler)
             // ECG exam route
             .service(route_post_ecg_exam::ecg_exam_handler)
+            // XRAY exam route
+            .service(route_post_xray_exam::xray_exam_handler)
             // Future Enhancements: Add more routes here
     );
 }

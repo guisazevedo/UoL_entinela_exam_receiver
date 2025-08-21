@@ -1,1 +1,1 @@
-pub mod model_ecg_exam;
+pub mod models_exams;
