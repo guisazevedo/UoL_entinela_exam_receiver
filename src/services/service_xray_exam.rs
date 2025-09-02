@@ -11,9 +11,11 @@ use crate::models::models_exams::PayloadXray;
 // MAIN FUNCTIONS **********************************************************************************
 // TODO: Implement the handler for XRay exam processing
 pub async fn handler_xray_exam(
-    _data: PayloadXray,
+    data: PayloadXray,
     _gcs_client: &Arc<GcsClient>,
     _pubsub_client: &Arc<PubSubClient>,
 ) -> Result<()> {
+    println!("Processing XRay exam data: {:?}", data);
+
     Ok(())
 }
