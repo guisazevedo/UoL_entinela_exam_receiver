@@ -3,10 +3,10 @@ name: Build and Push to GCP
 
 # Trigger this workflow only after 'rust_compile_tests' completes
 on:
-#  workflow_run:
-#    workflows: ["rust_compile_tests"]
-#    types:
-#      - completed
+  workflow_run:
+    workflows: ["rust_compile_tests"]
+    types:
+      - completed
   push:
     branches: [ "**" ]  # Trigger on pushes to any branch
 
