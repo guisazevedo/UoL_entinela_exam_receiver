@@ -23,7 +23,6 @@ FROM debian:bookworm-slim
 
 # Create a non-root user to run the application
 RUN useradd -m appuser
-USER appuser
 
 # Install libss13 (needed for OpenSSL3)
 #RUN apt-get update && apt-get install -y libssl3 && rm -rf /var/lib/apt/lists/*
@@ -31,6 +30,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends libssl3 ca-certificates && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
+
+# Switch to the non-root user
+USER appuser
 
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
