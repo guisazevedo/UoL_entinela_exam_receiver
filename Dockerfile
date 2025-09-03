@@ -8,8 +8,8 @@ ARG GOOGLE_APPLICATION_CREDENTIALS
 ENV GOOGLE_APPLICATION_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS
 
 # Create a new empty shell project
-RUN USER=root cargo new --bin sentinela_exam_gateway
-WORKDIR /sentinela_exam_gateway
+RUN USER=root cargo new --bin sentinela_exam_receiver
+WORKDIR /sentinela_exam_receiver
 
 # Copy the source code
 COPY src ./src
@@ -40,10 +40,10 @@ ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV DOCKER_ENV=true
 
 # Copy the build artifact from the builder stage
-COPY --from=builder /sentinela_exam_gateway/target/release/sentinela_exam_gateway /usr/local/bin/sentinela_exam_gateway
+COPY --from=builder /sentinela_exam_receiver/target/release/sentinela_exam_receiver /usr/local/bin/sentinela_exam_receiver
 
 # Expose the port the app runs on
 EXPOSE 8080
 
 # Run the application
-CMD ["sentinela_exam_gateway"]
+CMD ["sentinela_exam_receiver"]
