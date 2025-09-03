@@ -246,7 +246,7 @@ mod tests {
         assert!(map.contains_key("pubsub"));
 
         let parquet = map.get("parquet").unwrap();
-        assert_eq!(parquet.get("exam_type").unwrap().as_str().unwrap(), "ECG_Exam");
+        assert_eq!(parquet.get("exam_type").unwrap().as_str().unwrap(), "ECG");
         let ts = parquet.get("timestamp").unwrap().as_str().unwrap();
         assert!(ts.ends_with('Z'));
 
@@ -256,7 +256,7 @@ mod tests {
 
         let pubsub = map.get("pubsub").unwrap();
         assert_eq!(pubsub.get("topic").unwrap().as_str().unwrap(), "topic-ecg-dev");
-        assert_eq!(pubsub.get("exam_type").unwrap().as_str().unwrap(), "ECG Exam");
+        assert_eq!(pubsub.get("exam_type").unwrap().as_str().unwrap(), "ECG");
         assert_eq!(pubsub.get("patient_id").unwrap().as_str().unwrap(), p.patient_id);
         assert_eq!(pubsub.get("hospital_id").unwrap().as_str().unwrap(), p.hospital_id);
     }
