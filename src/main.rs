@@ -1,6 +1,5 @@
 // TODO - create a proper redis -> persistent storage connection for rate limiting total and per user/IP
-// TODO - github actions -> GCP
-// TODO - virus scanner
+// TODO - add virus scanner
 // TODO - cxray data transformation
 
 // Imports *****************************************************************************************
@@ -17,14 +16,12 @@ use std::sync::Arc;
 mod models;
 mod routes;
 mod services;
-mod utils;
-
 
 // Global variables ********************************************************************************
 // Connection Constants
 pub const PORT: u16 = 8080;
 pub const HOST: &str = "0.0.0.0";
-pub const POST_SIZE_LIMIT: usize = 512_000; // 500 KB
+pub const POST_SIZE_LIMIT: usize = 512_000; // 500 KB for ecg OK
 
 
 // Main ********************************************************************************************

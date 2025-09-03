@@ -131,19 +131,20 @@ async fn save_ecg_exam_data(
     let bucket_name = std::env::var("BUCKET_NAME")?;
     // TODO -> define environment variable for bucket name
     let exam_type = "ecg_exam";
-    let hospital_id = data.get("hospital_id") // TODO -> review error handling
+    let hospital_id = data.get("hospital_id")
         .and_then(|v| v.as_str())
-        .expect("hospital_id was not set");
+        .ok_or_else(|| anyhow::anyhow!("hospital_id was not set"))?;
     let patient_id = data.get("patient_id")
         .and_then(|v| v.as_str())
-        .expect("patient_id was not set");
+        .ok_or_else(|| anyhow::anyhow!("patient_id was not set"))?;
     let timestamp = data.get("timestamp")
         .and_then(|v| v.as_str())
-        .expect("timestamp was not set");
+        .ok_or_else(|| anyhow::anyhow!("timestamp was not set"))?;
     let object_name = format!(
         "{}/{}/{}/{}.parquet",
         exam_type, hospital_id, patient_id, timestamp
     );
+
 
     // STEP 2: Convert the data to Parquet format
     // Convert to json string
@@ -184,7 +185,7 @@ async fn send_to_pubsub(
     // STEP 1: Extract the topic and message from the data
     let topic_name = data.get("topic")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| anyhow::anyhow!("topic was not set"))?; // TODO -> deal error handling
+        .ok_or_else(|| anyhow::anyhow!("topic was not set"))?;
 
     // STEP 2: Create the PubSub message as JSON string
     let payload = serde_json::to_string(&data)?;
@@ -205,7 +206,7 @@ async fn send_to_pubsub(
         ordering_key: "".to_string(),
     };
     message.data = payload.into_bytes();
-    publisher.publish(message).await.get().await?; // TODO -> review...
+    publisher.publish(message).await;
     Ok(())
 }
 
@@ -213,7 +214,7 @@ async fn send_to_pubsub(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::model_ecg_exam::{Payload, ECG_LEAD_LENGTH};
+    use crate::models::models_exams::{PayloadEcg, ECG_LEAD_LENGTH};
     use validator::Validate;
 
     fn hex64(c: char) -> String { std::iter::repeat(c).take(64).collect() }
@@ -222,8 +223,8 @@ mod tests {
         v[0] = 0.5;
         v
     }
-    fn valid_payload() -> Payload {
-        Payload {
+    fn valid_payload() -> PayloadEcg {
+        PayloadEcg {
             patient_id: hex64('a'),
             hospital_id: hex64('b'),
             hospital_key: hex64('c'),

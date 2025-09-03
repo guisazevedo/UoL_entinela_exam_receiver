@@ -33,7 +33,7 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev
-      # TODO -> needs to be a variable for flavours
+      # TODO -> make variable for flavours
 
       - name: Build and push Docker image
         run: |
@@ -43,4 +43,4 @@ jobs:
             -t us-central1-docker.pkg.dev/sentinela-diagnosis-dev/sentinela-diagnosis-dev-docker-repo/exam_gateway:latest .
 
           docker push us-central1-docker.pkg.dev/sentinela-diagnosis-dev/sentinela-diagnosis-dev-docker-repo/exam_gateway:latest
-        # TODO -> needs to be a variable for flavours.
+      # TODO -> make variable for flavours.

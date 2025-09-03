@@ -194,8 +194,8 @@ mod tests {
     }
 
     /// Generates a Payload with valid IDs and a lead
-    fn payload_with_lead(lead: Vec<f32>) -> Payload {
-        Payload {
+    fn payload_with_lead(lead: Vec<f32>) -> PayloadEcg {
+        PayloadEcg {
             patient_id: valid_id(),
             hospital_id: valid_id(),
             hospital_key: valid_id(),
@@ -336,7 +336,7 @@ mod tests {
             "lead_v4": valid_lead(), "lead_v5": valid_lead(), "lead_v6": valid_lead(),
             "extra": 123 // should be rejected by #[serde(deny_unknown_fields)]
         });
-        let res: Result<Payload, _> = serde_json::from_value(v);
+        let res: Result<PayloadEcg, _> = serde_json::from_value(v);
         assert!(res.is_err());
     }
 }

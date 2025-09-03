@@ -7,7 +7,6 @@ pub mod health_checker;
 pub mod route_post_ecg_exam;
 pub mod route_post_xray_exam;
 
-
 // Router Configuration ****************************************************************************
 pub fn config(cfg: &mut web::ServiceConfig) {
     // Register services for the application v1
