@@ -8,7 +8,8 @@ on:
     types:
       - completed
   push:
-    branches: [ "**" ]  # Trigger on pushes to any branch
+    branches:
+      - develop
 
 jobs:
   build-and-push:
