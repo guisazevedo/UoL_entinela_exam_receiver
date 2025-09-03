@@ -44,3 +44,12 @@ jobs:
 
           docker push us-central1-docker.pkg.dev/sentinela-diagnosis-dev/sentinela-diagnosis-dev-docker-repo/exam_gateway:latest
       # TODO -> make variable for flavours.
+
+      - name: Deploy no Cloud Run
+        run: |
+          gcloud run deploy exam-gateway \
+              --image us-central1-docker.pkg.dev/sentinela-diagnosis-dev/sentinela-diagnosis-dev-docker-repo/exam_gateway:latest \
+              --platform managed \
+              --region us-central1 \
+              --allow-unauthenticated \
+              --port 8080
