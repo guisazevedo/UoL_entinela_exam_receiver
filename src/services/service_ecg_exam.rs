@@ -98,7 +98,7 @@ fn preprocess_ecg_data(data: PayloadEcg) -> Result<HashMap<String, serde_json::V
 
     // STEP 2: Create the ECG exam data structure for Parquet storage
     let ecg_exam_parquet = EcgExamParquet {
-        exam_type: "ECG_Exam".to_string(),
+        exam_type: "ECG".to_string(),
         timestamp: utc_timestamp_string.clone(),
         data: data.clone(),
     };
@@ -106,7 +106,7 @@ fn preprocess_ecg_data(data: PayloadEcg) -> Result<HashMap<String, serde_json::V
     // STEP 3: Create the ECG exam data structure for PubSub
     let ecg_exam_pubsub = EcgExamPubSub {
         topic: "topic-ecg-dev".to_string(), // TODO -> discuss topic name for dev/prod
-        exam_type: "ECG Exam".to_string(),
+        exam_type: "ECG".to_string(),
         timestamp: utc_timestamp_string,
         patient_id: data.patient_id.clone(),
         hospital_id: data.hospital_id.clone(),
