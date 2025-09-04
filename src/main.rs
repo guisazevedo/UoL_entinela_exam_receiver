@@ -10,6 +10,7 @@ use google_cloud_pubsub::client::{Client as PubSubClient, ClientConfig as PubSub
 use log::{info};
 use dotenv::dotenv;
 use std::sync::Arc;
+use std::env;
 
 
 // Internal Modules
