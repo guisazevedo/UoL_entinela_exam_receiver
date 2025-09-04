@@ -207,6 +207,7 @@ async fn send_to_pubsub(
     };
     message.data = payload.into_bytes();
     publisher.publish(message).await;
+    println!("Data sent to PubSub topic: {}", topic_name);
     Ok(())
 }
 
