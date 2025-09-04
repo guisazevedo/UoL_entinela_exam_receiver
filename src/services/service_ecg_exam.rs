@@ -178,56 +178,23 @@ async fn save_ecg_exam_data(
 }
 
 /// Send the ECG exam data to PubSub for further processing
-async fn send_to_pubsub(
-    data: serde_json::Value,
-    pubsub_client: &Arc<PubSubClient>,
-) -> Result<()> {
-
-    use base64::{engine::general_purpose::STANDARD, Engine as _};
-
-    // STEP 1: Extract the topic and message from the data
-    let topic_name = data.get("topic")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| anyhow::anyhow!("topic was not set"))?;
-
-    // STEP 2: Create the PubSub message as JSON string
-    let payload_json = serde_json::to_string(&data)?;
-    let payload_base64 = STANDARD.encode(payload_json.as_bytes());
-
-    println!("Data to be sent to PubSub: {}", payload_base64);
-
-    // STEP 3: Get the topic and create a publisher
-    let topic = pubsub_client.topic(topic_name);
-    let publisher = topic.new_publisher(None);
-
-    // STEP 4: Create the PubSub message and publish it
-    // let mut message = google_cloud_pubsub::publisher::PubsubMessage::default();
-    let mut message = PubsubMessage {
-        data: payload_base64.into_bytes(),
-        attributes: Default::default(),
-        message_id: "".to_string(),
-        publish_time: None,
-        ordering_key: "".to_string(),
-    };
-    
-    publisher.publish(message).await;
-    println!("Data sent to PubSub topic: {}", topic_name);
-    Ok(())
-}
-
 // async fn send_to_pubsub(
 //     data: serde_json::Value,
 //     pubsub_client: &Arc<PubSubClient>,
 // ) -> Result<()> {
+//
+//     use base64::{engine::general_purpose::STANDARD, Engine as _};
+//
 //     // STEP 1: Extract the topic and message from the data
 //     let topic_name = data.get("topic")
 //         .and_then(|v| v.as_str())
 //         .ok_or_else(|| anyhow::anyhow!("topic was not set"))?;
 //
 //     // STEP 2: Create the PubSub message as JSON string
-//     let payload = serde_json::to_string(&data)?;
+//     let payload_json = serde_json::to_string(&data)?;
+//     let payload_base64 = STANDARD.encode(payload_json.as_bytes());
 //
-//     println!("Data to be sent to PubSub: {}", payload);
+//     println!("Data to be sent to PubSub: {}", payload_base64);
 //
 //     // STEP 3: Get the topic and create a publisher
 //     let topic = pubsub_client.topic(topic_name);
@@ -236,17 +203,50 @@ async fn send_to_pubsub(
 //     // STEP 4: Create the PubSub message and publish it
 //     // let mut message = google_cloud_pubsub::publisher::PubsubMessage::default();
 //     let mut message = PubsubMessage {
-//         data: payload.clone().into_bytes(),
+//         data: payload_base64.into_bytes(),
 //         attributes: Default::default(),
 //         message_id: "".to_string(),
 //         publish_time: None,
 //         ordering_key: "".to_string(),
 //     };
-//     message.data = payload.into_bytes();
+//
 //     publisher.publish(message).await;
 //     println!("Data sent to PubSub topic: {}", topic_name);
 //     Ok(())
 // }
+
+async fn send_to_pubsub(
+    data: serde_json::Value,
+    pubsub_client: &Arc<PubSubClient>,
+) -> Result<()> {
+    // STEP 1: Extract the topic and message from the data
+    let topic_name = data.get("topic")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| anyhow::anyhow!("topic was not set"))?;
+
+    // STEP 2: Create the PubSub message as JSON string
+    let payload = serde_json::to_string(&data)?;
+
+    println!("Data to be sent to PubSub: {}", payload);
+
+    // STEP 3: Get the topic and create a publisher
+    let topic = pubsub_client.topic(topic_name);
+    let publisher = topic.new_publisher(None);
+
+    // STEP 4: Create the PubSub message and publish it
+    // let mut message = google_cloud_pubsub::publisher::PubsubMessage::default();
+    let mut message = PubsubMessage {
+        data: payload.clone().into_bytes(),
+        attributes: Default::default(),
+        message_id: "".to_string(),
+        publish_time: None,
+        ordering_key: "".to_string(),
+    };
+    message.data = payload.into_bytes();
+    publisher.publish(message).await;
+    println!("Data sent to PubSub topic: {}", topic_name);
+    Ok(())
+}
 
 // TESTS *******************************************************************************************
 #[cfg(test)]
