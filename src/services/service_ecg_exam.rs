@@ -15,6 +15,8 @@ use google_cloud_googleapis::pubsub::v1::PubsubMessage;
 use std::sync::Arc;
 use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
 use std::borrow::Cow;
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 
 // Internal Modules
 use crate::models::models_exams::{PayloadEcg};
@@ -48,11 +50,14 @@ pub async fn handler_ecg_exam(
     save_ecg_exam_data(parquet, gcs_client).await?;
 
     println!("Handling ECG payload - pre-processing the data - done - parquet saved");
+
     // STEP 3: Send to PubSub for further processing
     let pubsub_data = prep_data.get("pubsub")
         .unwrap() // DOCUMENTATION -> safe given data flow at hashmap creation below
         .clone();
     send_to_pubsub(pubsub_data.clone(), pubsub_client).await?;
+
+    println!("Handling ECG payload - pre-processing the data - done - parquet saved - pubsub sent");
 
     println!("pubsub_data: {:?}", pubsub_data);
 
@@ -191,8 +196,9 @@ async fn send_to_pubsub(
 
     // STEP 2: Create the PubSub message as JSON string
     let payload = serde_json::to_string(&data)?;
+    let encoded_payload = STANDARD.encode(&payload);
 
-    println!("Data to be sent to PubSub: {}", payload);
+    println!("Data to be sent to PubSub: {}", encoded_payload);
 
     // STEP 3: Get the topic and create a publisher
     let topic = pubsub_client.topic(topic_name);
@@ -201,13 +207,13 @@ async fn send_to_pubsub(
     // STEP 4: Create the PubSub message and publish it
     // let mut message = google_cloud_pubsub::publisher::PubsubMessage::default();
     let mut message = PubsubMessage {
-        data: payload.clone().into_bytes(),
+        data: encoded_payload.clone().into_bytes(),
         attributes: Default::default(),
         message_id: "".to_string(),
         publish_time: None,
         ordering_key: "".to_string(),
     };
-    message.data = payload.into_bytes();
+    message.data = encoded_payload.into_bytes();
     publisher.publish(message).await;
     println!("Data sent to PubSub topic: {}", topic_name);
     Ok(())
