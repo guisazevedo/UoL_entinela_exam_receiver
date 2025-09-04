@@ -21,7 +21,7 @@ mod services;
 // Connection Constants
 pub const PORT: u16 = 8080;
 pub const HOST: &str = "0.0.0.0";
-pub const POST_SIZE_LIMIT: usize = 512_000; // 500 KB for ecg OK
+pub const POST_SIZE_LIMIT: usize = 512_000;
 
 
 // Main ********************************************************************************************

@@ -55,7 +55,7 @@ pub async fn handler_ecg_exam(
     send_to_pubsub(pubsub_data, pubsub_client).await?;
 
     // STEP 4: Return success response
-    info!("ECG exam successfully processed");
+    println!("ECG exam successfully processed");
     Ok(())
 }
 
