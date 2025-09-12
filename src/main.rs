@@ -1,3 +1,7 @@
+#![deny(clippy::unwrap_used)]
+#![deny(clippy::expect_used)]
+#![deny(clippy::panic)]
+
 // TODO - create a proper redis -> persistent storage connection for rate limiting total and per user/IP
 // TODO - add virus scanner
 // TODO - cxray data transformation
@@ -31,6 +35,7 @@ async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
     // Initialize logger
+    std::env::set_var("RUST_LOG", "info");
     env_logger::init();
     info!("Starting the ActixWeb server: SENTINELA EXAM GATEWAY");
 

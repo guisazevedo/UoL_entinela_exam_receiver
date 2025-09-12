@@ -37,7 +37,7 @@ pub async fn handler_ecg_exam(
 
     println!("Handling ECG payload - pre-processing the data");
     // STEP 1: Pre-process the data
-    let prep_data = preprocess_ecg_data(data)?;
+    let prep_data = preprocess_ecg_data(data.clone())?;
 
     println!("Handling ECG payload - pre-processing the data - done");
     // STEP 2: Save ECG exam data to persistent storage
@@ -141,10 +141,7 @@ async fn save_ecg_exam_data(
     let timestamp = data.get("timestamp")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("timestamp was not set"))?;
-    let object_name = format!(
-        "{}/{}/{}/{}.parquet",
-        exam_type, hospital_id, patient_id, timestamp
-    );
+    let object_name = format!("{exam_type}/{hospital_id}/{patient_id}/{timestamp}.parquet");
 
     // STEP 2: Convert the data to Parquet format
     // Convert to json string
@@ -160,7 +157,7 @@ async fn save_ecg_exam_data(
         .finish(&mut df)?;
 
     // STEP 3: Upload the Parquet file to GCP Cloud Storage
-    let media = Media::new(Cow::Owned(object_name));
+    let media = Media::new(Cow::Owned(object_name.clone()));
     let upload_type = UploadType::Simple(media);
 
     gcs_client
