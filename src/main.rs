@@ -2,9 +2,8 @@
 #![deny(clippy::expect_used)]
 #![deny(clippy::panic)]
 
-// TODO - create a proper redis -> persistent storage connection for rate limiting total and per user/IP
+// TODO - DEV PROD environment variables -> config file
 // TODO - add virus scanner
-// TODO - cxray data transformation
 
 // Imports *****************************************************************************************
 // External Crates
@@ -29,6 +28,7 @@ pub const POST_SIZE_LIMIT: usize = 512_000;
 
 // Main ********************************************************************************************
 #[actix_web::main]
+/// The main function initializes environment variables, logging, GCP clients, and starts the ActixWeb server.
 async fn main() -> std::io::Result<()> {
 
     // Initialize environment variables
@@ -49,7 +49,7 @@ async fn main() -> std::io::Result<()> {
 
     // ActixWeb server initialization
     HttpServer::new(move || {
-        println!("Server is running on https://{HOST}:{PORT}");
+        info!("Server is running on https://{HOST}:{PORT}");
     App::new()
         .app_data(web::Data::new(gcs_client.clone()))
         .app_data(web::Data::new(pubsub_client.clone()))
@@ -66,13 +66,17 @@ async fn main() -> std::io::Result<()> {
 
 // Support Functions *******************************************************************************
 
-// function to initialize the GCS client
+/// function to initialize the GCS client
+/// # Errors
+/// Returns an error if the GCS client configuration or authentication fails.
 async fn init_gcs_client() -> Result<Arc<GcsClient>, Box<dyn std::error::Error>> {
     let gcs_config = GcsClientConfig::default().with_auth().await?;
     Ok(Arc::new(GcsClient::new(gcs_config)))
 }
 
-// function to initialize the PubSub client
+/// function to initialize the PubSub client
+/// # Errors
+/// Returns an error if the PubSub client configuration or authentication fails.
 async fn init_pubsub_client() -> Result<Arc<PubSubClient>, Box<dyn std::error::Error>> {
     let pubsub_config = PubSubClientConfig::default().with_auth().await?;
     let pubsub_client = PubSubClient::new(pubsub_config).await?;

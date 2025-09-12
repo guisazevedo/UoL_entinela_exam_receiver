@@ -33,7 +33,7 @@ pub async fn ecg_exam_handler(
         return Ok(HttpResponse::BadRequest().json(json!({ "error": "Invalid Input" })));
     }
 
-    // STEP 2: Extract data from payload and process it
+    // STEP 2: Extract data from payload, process and log it, then return response
     let data = payload.into_inner();
     match handler_ecg_exam(data, &gcs_client, &pubsub_client).await {
         Ok(_) => {

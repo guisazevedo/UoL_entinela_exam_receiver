@@ -3,6 +3,7 @@ use actix_web::{get, HttpResponse};
 
 // Health Check Handler
 #[get("/health_check")]
+/// Health check endpoint to verify if the server is running
 pub async fn health_check_handler() -> HttpResponse {
     HttpResponse::Ok().body(format!("SENTINELA EXAM GATEWAY server is running on {HOST}:{PORT}"))
 }

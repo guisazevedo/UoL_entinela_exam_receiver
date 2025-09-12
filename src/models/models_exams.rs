@@ -145,6 +145,11 @@ fn validate_ecg_leads(values: &[f32]) -> Result<(), ValidationError> {
     Ok(())
 }
 
+/// Custom validation function for 1024x1024 base64 encoded image
+/// # Arguments
+/// * `base64_str` - A string representing the base64 encoded image
+/// # Returns
+/// * A Result containing a unit type or a ValidationError
 fn validate_1024_base64_image(base64_str: &str) -> Result<(), ValidationError> {
     const IMAGE_SIZE: u32 = 1024;
     // Bring it to raw bytes

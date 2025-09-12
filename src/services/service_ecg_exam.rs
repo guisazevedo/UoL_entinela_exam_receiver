@@ -14,6 +14,7 @@ use google_cloud_googleapis::pubsub::v1::PubsubMessage;
 use std::sync::Arc;
 use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
 use std::borrow::Cow;
+use log::{info, error};
 
 // Internal Modules
 use crate::models::models_exams::{PayloadEcg};
@@ -35,29 +36,28 @@ pub async fn handler_ecg_exam(
     pubsub_client: &Arc<PubSubClient>,
 ) -> Result<()> {
 
-    println!("Handling ECG payload - pre-processing the data");
+    info!("Handling ECG payload - pre-processing the data");
     // STEP 1: Pre-process the data
     let prep_data = preprocess_ecg_data(data.clone())?;
 
-    println!("Handling ECG payload - pre-processing the data - done");
     // STEP 2: Save ECG exam data to persistent storage
     let parquet = prep_data.get("parquet")
-        .unwrap() // DOCUMENTATION -> safe given data flow at hashmap creation below
+        .ok_or_else(|| anyhow::anyhow!("Missing 'parquet' entry in prep_data"))?
         .clone();
     save_ecg_exam_data(parquet, gcs_client).await?;
 
-    println!("Handling ECG payload - pre-processing the data - done - parquet saved");
+    info!("Handling ECG payload - pre-processing the data - done - parquet saved");
 
     // STEP 3: Send to PubSub for further processing
     let pubsub_data = prep_data.get("pubsub")
-        .unwrap() // DOCUMENTATION -> safe given data flow at hashmap creation below
+        .ok_or_else(|| anyhow::anyhow!("Missing 'pubsub' entry in prep_data"))?
         .clone();
     send_to_pubsub(pubsub_data.clone(), pubsub_client).await?;
 
-    println!("Handling ECG payload - pre-processing the data - done - parquet saved - pubsub sent");
+    info!("Handling ECG payload - pre-processing the data - done - parquet saved - pubsub sent");
 
     // STEP 4: Return success response
-    println!("ECG exam successfully processed");
+    info!("ECG exam successfully processed");
     Ok(())
 }
 
@@ -91,7 +91,13 @@ struct EcgExamPubSub {
     hospital_id: String,
 }
 
-/// Pre-process the ECG data
+/// Pre-process the ECG data for storage and PubSub
+/// # Arguments
+/// * `data` - A Payload struct containing the validated data of the ECG exam
+/// # Returns
+/// * A HashMap containing two entries: one for Parquet storage and one for PubSub
+/// # Errors
+/// * Returns an error if serialization fails
 fn preprocess_ecg_data(data: PayloadEcg) -> Result<HashMap<String, serde_json::Value>> {
     // STEP 1: Get name variables
     let utc_timestamp = chrono::Utc::now();
@@ -106,7 +112,7 @@ fn preprocess_ecg_data(data: PayloadEcg) -> Result<HashMap<String, serde_json::V
 
     // STEP 3: Create the ECG exam data structure for PubSub
     let ecg_exam_pubsub = EcgExamPubSub {
-        topic: "topic-ecg-dev".to_string(), // TODO -> discuss topic name for dev/prod
+        topic: "topic-ecg-dev".to_string(), // TODO -> discuss name for dev/prod
         exam_type: "ECG Exam".to_string(),
         timestamp: utc_timestamp_string,
         patient_id: data.patient_id.clone(),
@@ -121,7 +127,14 @@ fn preprocess_ecg_data(data: PayloadEcg) -> Result<HashMap<String, serde_json::V
     Ok(map)
 }
 
-/// Save the ECG exam data to persistent storage
+/// Save the ECG exam data to persistent storage as Parquet in GCP Cloud Storage
+/// # Arguments
+/// * `data` - A serde_json::Value containing the ECG exam data for Parquet storage
+/// * `gcs_client` - An Arc reference to the GCS client for storage operations
+/// # Returns
+/// * A Result indicating success or failure of the operation
+/// # Errors
+/// * Returns an error if any step in the saving process fails
 async fn save_ecg_exam_data(
     data: serde_json::Value,
     gcs_client: &Arc<GcsClient>,
@@ -130,7 +143,6 @@ async fn save_ecg_exam_data(
     // Save ECG exam data to persistent storage as parquet -> GCP Cloud Storage
     // STEP 1: create the unique file name
     let bucket_name = std::env::var("BUCKET_NAME")?;
-    // TODO -> define environment variable for bucket name
     let exam_type = "ecg_exam";
     let hospital_id = data.get("hospital_id")
         .and_then(|v| v.as_str())
@@ -175,6 +187,13 @@ async fn save_ecg_exam_data(
 }
 
 /// Send the ECG exam data to PubSub for further processing
+/// # Arguments
+/// * `data` - A serde_json::Value containing the ECG exam data for PubSub
+/// * `pubsub_client` - An Arc reference to the PubSub client for message publishing
+/// # Returns
+/// * A Result indicating success or failure of the operation
+/// # Errors
+/// * Returns an error if any step in the sending process fails
 async fn send_to_pubsub(
     data: serde_json::Value,
     pubsub_client: &Arc<PubSubClient>,
@@ -203,8 +222,6 @@ async fn send_to_pubsub(
 
     // STEP 5: Publish the message
     let result = publisher.publish(message).await;
-    
-    println!("Result: {:?}", result.get().await); // Debugging line
 
     Ok(())
 }
