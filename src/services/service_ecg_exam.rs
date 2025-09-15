@@ -1,23 +1,23 @@
 // Imports *****************************************************************************************
 // External Crates
-use anyhow::{Result};
-use serde::Serialize;
+use anyhow::Result;
 use chrono;
-use std::collections::HashMap;
-use polars::prelude::*;
+use google_cloud_googleapis::pubsub::v1::PubsubMessage;
+use google_cloud_pubsub::client::Client as PubSubClient;
+use google_cloud_storage::client::Client as GcsClient;
+use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
+use log::info;
 use polars::io::json::JsonReader;
 use polars::io::parquet::{ParquetWriter, ZstdLevel};
-use std::io::Cursor;
-use google_cloud_storage::client::{Client as GcsClient};
-use google_cloud_pubsub::client::{Client as PubSubClient};
-use google_cloud_googleapis::pubsub::v1::PubsubMessage;
-use std::sync::Arc;
-use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
+use polars::prelude::*;
+use serde::Serialize;
 use std::borrow::Cow;
-use log::{info, error};
+use std::collections::HashMap;
+use std::io::Cursor;
+use std::sync::Arc;
 
 // Internal Modules
-use crate::models::models_exams::{PayloadEcg};
+use crate::models::models_exams::PayloadEcg;
 
 // Services ****************************************************************************************
 // Follow service protocol for handling ECG exam data
@@ -35,13 +35,13 @@ pub async fn handler_ecg_exam(
     gcs_client: &Arc<GcsClient>,
     pubsub_client: &Arc<PubSubClient>,
 ) -> Result<()> {
-
     info!("Handling ECG payload - pre-processing the data");
     // STEP 1: Pre-process the data
     let prep_data = preprocess_ecg_data(data.clone())?;
 
     // STEP 2: Save ECG exam data to persistent storage
-    let parquet = prep_data.get("parquet")
+    let parquet = prep_data
+        .get("parquet")
         .ok_or_else(|| anyhow::anyhow!("Missing 'parquet' entry in prep_data"))?
         .clone();
     save_ecg_exam_data(parquet, gcs_client).await?;
@@ -49,7 +49,8 @@ pub async fn handler_ecg_exam(
     info!("Handling ECG payload - pre-processing the data - done - parquet saved");
 
     // STEP 3: Send to PubSub for further processing
-    let pubsub_data = prep_data.get("pubsub")
+    let pubsub_data = prep_data
+        .get("pubsub")
         .ok_or_else(|| anyhow::anyhow!("Missing 'pubsub' entry in prep_data"))?
         .clone();
     send_to_pubsub(pubsub_data.clone(), pubsub_client).await?;
@@ -60,7 +61,6 @@ pub async fn handler_ecg_exam(
     info!("ECG exam successfully processed");
     Ok(())
 }
-
 
 // Support Functions & Structs *********************************************************************
 /// Struct to represent the ECG exam data in a format suitable for Parquet storage
@@ -112,7 +112,7 @@ fn preprocess_ecg_data(data: PayloadEcg) -> Result<HashMap<String, serde_json::V
 
     // STEP 3: Create the ECG exam data structure for PubSub
     let ecg_exam_pubsub = EcgExamPubSub {
-        topic: "topic-ecg-dev".to_string(), // TODO -> discuss name for dev/prod
+        topic: "topic-ecg-dev".to_string(), // TODO: after PoC: discuss name for dev/prod
         exam_type: "ECG Exam".to_string(),
         timestamp: utc_timestamp_string,
         patient_id: data.patient_id.clone(),
@@ -121,7 +121,10 @@ fn preprocess_ecg_data(data: PayloadEcg) -> Result<HashMap<String, serde_json::V
 
     // STEP 4: Convert the structures to HashMap for further processing
     let mut map = HashMap::new();
-    map.insert("parquet".to_string(), serde_json::to_value(ecg_exam_parquet)?);
+    map.insert(
+        "parquet".to_string(),
+        serde_json::to_value(ecg_exam_parquet)?,
+    );
     map.insert("pubsub".to_string(), serde_json::to_value(ecg_exam_pubsub)?);
 
     Ok(map)
@@ -135,22 +138,21 @@ fn preprocess_ecg_data(data: PayloadEcg) -> Result<HashMap<String, serde_json::V
 /// * A Result indicating success or failure of the operation
 /// # Errors
 /// * Returns an error if any step in the saving process fails
-async fn save_ecg_exam_data(
-    data: serde_json::Value,
-    gcs_client: &Arc<GcsClient>,
-) -> Result<()> {
-
+async fn save_ecg_exam_data(data: serde_json::Value, gcs_client: &Arc<GcsClient>) -> Result<()> {
     // Save ECG exam data to persistent storage as parquet -> GCP Cloud Storage
     // STEP 1: create the unique file name
     let bucket_name = std::env::var("BUCKET_NAME")?;
     let exam_type = "ecg_exam";
-    let hospital_id = data.get("hospital_id")
+    let hospital_id = data
+        .get("hospital_id")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("hospital_id was not set"))?;
-    let patient_id = data.get("patient_id")
+    let patient_id = data
+        .get("patient_id")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("patient_id was not set"))?;
-    let timestamp = data.get("timestamp")
+    let timestamp = data
+        .get("timestamp")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("timestamp was not set"))?;
     let object_name = format!("{exam_type}/{hospital_id}/{patient_id}/{timestamp}.parquet");
@@ -194,12 +196,10 @@ async fn save_ecg_exam_data(
 /// * A Result indicating success or failure of the operation
 /// # Errors
 /// * Returns an error if any step in the sending process fails
-async fn send_to_pubsub(
-    data: serde_json::Value,
-    pubsub_client: &Arc<PubSubClient>,
-) -> Result<()> {
+async fn send_to_pubsub(data: serde_json::Value, pubsub_client: &Arc<PubSubClient>) -> Result<()> {
     // STEP 1: Extract the topic and message from the data
-    let topic_name = data.get("topic")
+    let topic_name = data
+        .get("topic")
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow::anyhow!("topic was not set"))?;
 
@@ -221,7 +221,7 @@ async fn send_to_pubsub(
     };
 
     // STEP 5: Publish the message
-    let result = publisher.publish(message).await;
+    publisher.publish(message).await;
 
     Ok(())
 }
@@ -233,7 +233,9 @@ mod tests {
     use crate::models::models_exams::{PayloadEcg, ECG_LEAD_LENGTH};
     use validator::Validate;
 
-    fn hex64(c: char) -> String { std::iter::repeat(c).take(64).collect() }
+    fn hex64(c: char) -> String {
+        std::iter::repeat(c).take(64).collect()
+    }
     fn lead_ok() -> Vec<f32> {
         let mut v = vec![0.0; ECG_LEAD_LENGTH];
         v[0] = 0.5;
@@ -244,10 +246,18 @@ mod tests {
             patient_id: hex64('a'),
             hospital_id: hex64('b'),
             hospital_key: hex64('c'),
-            lead_i: lead_ok(), lead_ii: lead_ok(), lead_iii: lead_ok(),
-            lead_avr: lead_ok(), lead_avl: lead_ok(), lead_avf: lead_ok(),
-            lead_v1: lead_ok(), lead_v2: lead_ok(), lead_v3: lead_ok(),
-            lead_v4: lead_ok(), lead_v5: lead_ok(), lead_v6: lead_ok(),
+            lead_i: lead_ok(),
+            lead_ii: lead_ok(),
+            lead_iii: lead_ok(),
+            lead_avr: lead_ok(),
+            lead_avl: lead_ok(),
+            lead_avf: lead_ok(),
+            lead_v1: lead_ok(),
+            lead_v2: lead_ok(),
+            lead_v3: lead_ok(),
+            lead_v4: lead_ok(),
+            lead_v5: lead_ok(),
+            lead_v6: lead_ok(),
         }
     }
 
@@ -262,29 +272,57 @@ mod tests {
         assert!(map.contains_key("pubsub"));
 
         let parquet = map.get("parquet").unwrap();
-        assert_eq!(parquet.get("exam_type").unwrap().as_str().unwrap(), "ECG Exam");
+        assert_eq!(
+            parquet.get("exam_type").unwrap().as_str().unwrap(),
+            "ECG Exam"
+        );
         let ts = parquet.get("timestamp").unwrap().as_str().unwrap();
         assert!(ts.ends_with('Z'));
 
         // payload flattened under parquet
-        assert_eq!(parquet.get("patient_id").unwrap().as_str().unwrap(), p.patient_id);
-        assert_eq!(parquet.get("hospital_id").unwrap().as_str().unwrap(), p.hospital_id);
+        assert_eq!(
+            parquet.get("patient_id").unwrap().as_str().unwrap(),
+            p.patient_id
+        );
+        assert_eq!(
+            parquet.get("hospital_id").unwrap().as_str().unwrap(),
+            p.hospital_id
+        );
 
         let pubsub = map.get("pubsub").unwrap();
-        assert_eq!(pubsub.get("topic").unwrap().as_str().unwrap(), "topic-ecg-dev");
-        assert_eq!(pubsub.get("exam_type").unwrap().as_str().unwrap(), "ECG Exam");
-        assert_eq!(pubsub.get("patient_id").unwrap().as_str().unwrap(), p.patient_id);
-        assert_eq!(pubsub.get("hospital_id").unwrap().as_str().unwrap(), p.hospital_id);
+        assert_eq!(
+            pubsub.get("topic").unwrap().as_str().unwrap(),
+            "topic-ecg-dev"
+        );
+        assert_eq!(
+            pubsub.get("exam_type").unwrap().as_str().unwrap(),
+            "ECG Exam"
+        );
+        assert_eq!(
+            pubsub.get("patient_id").unwrap().as_str().unwrap(),
+            p.patient_id
+        );
+        assert_eq!(
+            pubsub.get("hospital_id").unwrap().as_str().unwrap(),
+            p.hospital_id
+        );
     }
 
     // Borderline‑ok: timestamp format parses with your custom fmt
     #[test]
     fn preprocess_timestamp_format() {
         let map = preprocess_ecg_data(valid_payload()).unwrap();
-        let ts = map.get("parquet").unwrap().get("timestamp").unwrap().as_str().unwrap();
+        let ts = map
+            .get("parquet")
+            .unwrap()
+            .get("timestamp")
+            .unwrap()
+            .as_str()
+            .unwrap();
         assert!(ts.ends_with('Z'));
-        let ts_no_z = &ts[..ts.len()-1];
+        let ts_no_z = &ts[..ts.len() - 1];
         let fmt = "%Y-%m-%dT%H%M%S%.f";
         chrono::NaiveDateTime::parse_from_str(ts_no_z, fmt).expect("timestamp matches custom fmt");
     }
 }
+

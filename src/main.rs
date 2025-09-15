@@ -1,9 +1,8 @@
-#![deny(clippy::unwrap_used)]
-#![deny(clippy::expect_used)]
-#![deny(clippy::panic)]
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+#![cfg_attr(not(test), deny(clippy::expect_used))]
+#![cfg_attr(not(test), deny(clippy::panic))]
 
-// TODO - DEV PROD environment variables -> config file
-// TODO - add virus scanner
+// TODO - after PoC: DEV PROD environment variables -> config file
 
 // Imports *****************************************************************************************
 // External Crates
