@@ -16,12 +16,11 @@ RUN cargo build --release
 # Stage 2: Create the final image
 FROM debian:bookworm-slim
 
-# Create a non-root user to run the application
-RUN useradd -m appuser
-
 # Install libss13 (needed for OpenSSL3)
 #RUN apt-get update && apt-get install -y libssl3 && rm -rf /var/lib/apt/lists/*
-RUN apt-get update && \
+# Create a non-root user to run the application
+RUN useradd -m appuser && \
+    apt-get update && \
     apt-get install -y --no-install-recommends libssl3 ca-certificates && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
@@ -32,11 +31,11 @@ ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV DOCKER_ENV=true
 
 # Copy the build artifact from the builder stage
-COPY --from=builder /sentinela_exam_receiver/target/release/sentinela_exam_receiver /usr/local/bin/sentinela_exam_receiver/sentinela_exam_receiver
-COPY --from=builder /sentinela_exam_receiver/.env /usr/local/bin/sentinela_exam_receiver/.env
+COPY --from=builder /sentinela_exam_receiver/target/release/sentinela_exam_receiver /usr/local/bin/sentinela_exam_receiver
+COPY --from=builder /sentinela_exam_receiver/.env /usr/local/bin/.env
 
 # Set permissions and ownership
-RUN chown appuser:appuser /usr/local/bin/sentinela_exam_receiver/.env
+RUN chown appuser:appuser /usr/local/bin/.env
 
 # Switch to the non-root user
 USER appuser

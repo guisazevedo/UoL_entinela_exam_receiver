@@ -36,6 +36,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           docker build \
+            --build-arg GOOGLE_APPLICATION_CREDENTIALS=${{ secrets.GCP_SA_KEY }} \
             -t us-central1-docker.pkg.dev/sentinela-diagnosis-dev/sentinela-diagnosis-dev-docker-repo/exam_gateway:latest .
 
           docker push us-central1-docker.pkg.dev/sentinela-diagnosis-dev/sentinela-diagnosis-dev-docker-repo/exam_gateway:latest
