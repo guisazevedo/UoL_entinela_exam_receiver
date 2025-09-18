@@ -32,7 +32,7 @@ ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV DOCKER_ENV=true
 
 # Copy the build artifact from the builder stage
-COPY --from=builder /sentinela_exam_receiver/target/release/sentinela_exam_receiver /usr/local/bin/sentinela_exam_receiver
+COPY --from=builder /sentinela_exam_receiver/target/release/sentinela_exam_receiver /usr/local/bin/sentinela_exam_receiver/sentinela_exam_receiver
 COPY --from=builder /sentinela_exam_receiver/.env /usr/local/bin/sentinela_exam_receiver/.env
 
 # Set permissions and ownership
