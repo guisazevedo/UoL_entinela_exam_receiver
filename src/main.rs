@@ -7,10 +7,10 @@
 // Imports *****************************************************************************************
 // External Crates
 use actix_web::{mime, web, App, HttpServer};
-use google_cloud_storage::client::{Client as GcsClient, ClientConfig as GcsClientConfig};
-use google_cloud_pubsub::client::{Client as PubSubClient, ClientConfig as PubSubClientConfig};
-use log::{info};
 use dotenv::dotenv;
+use google_cloud_pubsub::client::{Client as PubSubClient, ClientConfig as PubSubClientConfig};
+use google_cloud_storage::client::{Client as GcsClient, ClientConfig as GcsClientConfig};
+use log::info;
 use std::sync::Arc;
 
 // Internal Modules
@@ -24,12 +24,10 @@ pub const PORT: u16 = 8080;
 pub const HOST: &str = "0.0.0.0";
 pub const POST_SIZE_LIMIT: usize = 512_000;
 
-
 // Main ********************************************************************************************
 #[actix_web::main]
 /// The main function initializes environment variables, logging, GCP clients, and starts the ActixWeb server.
 async fn main() -> std::io::Result<()> {
-
     // Initialize environment variables
     dotenv().ok();
 
@@ -40,27 +38,31 @@ async fn main() -> std::io::Result<()> {
 
     // Initialize GCP clients once
     // GCS Client
-    let gcs_client = init_gcs_client().await
+    let gcs_client = init_gcs_client()
+        .await
         .map_err(|e| std::io::Error::other(e.to_string()))?;
     // PubSub Client
-    let pubsub_client = init_pubsub_client().await
+    let pubsub_client = init_pubsub_client()
+        .await
         .map_err(|e| std::io::Error::other(e.to_string()))?;
 
     // ActixWeb server initialization
     HttpServer::new(move || {
         info!("Server is running on https://{HOST}:{PORT}");
-    App::new()
-        .app_data(web::Data::new(gcs_client.clone()))
-        .app_data(web::Data::new(pubsub_client.clone()))
-        .app_data(web::JsonConfig::default()
-            .limit(POST_SIZE_LIMIT)
-            .content_type(|mime| {mime == mime::APPLICATION_JSON}))
-        .configure(routes::config)
+        App::new()
+            .app_data(web::Data::new(gcs_client.clone()))
+            .app_data(web::Data::new(pubsub_client.clone()))
+            .app_data(
+                web::JsonConfig::default()
+                    .limit(POST_SIZE_LIMIT)
+                    .content_type(|mime| mime == mime::APPLICATION_JSON),
+            )
+            .configure(routes::config)
     })
-        .workers(num_cpus::get())
-        .bind(format!("{HOST}:{PORT}"))?
-        .run()
-        .await
+    .workers(num_cpus::get())
+    .bind(format!("{HOST}:{PORT}"))?
+    .run()
+    .await
 }
 
 // Support Functions *******************************************************************************
@@ -81,3 +83,4 @@ async fn init_pubsub_client() -> Result<Arc<PubSubClient>, Box<dyn std::error::E
     let pubsub_client = PubSubClient::new(pubsub_config).await?;
     Ok(Arc::new(pubsub_client))
 }
+

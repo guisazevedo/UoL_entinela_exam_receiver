@@ -1,6 +1,4 @@
-# Sentinela Exam Receiver
-
-A robust, cloud-native service for receiving, processing, and routing medical exam payloads (e.g., XRay, ECG) to Google Cloud Platform (GCP) services. Designed for reliability, scalability, and maintainability in healthcare data pipelines.
+# SENTINELA EXAM RECEIVER
 
 ## 📑 Table of Contents
 1. [Project Overview](#project-overview)
@@ -107,3 +105,5 @@ Sentinela Exam Receiver is a backend service written in Rust for ingesting and p
 - `README.md` - Project documentation
 
 ---
+
+© SwissAnalytica — All rights reserved.
