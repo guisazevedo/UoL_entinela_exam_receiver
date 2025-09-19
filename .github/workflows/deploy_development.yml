@@ -5,7 +5,7 @@ name: Build and Push to GCP
 on:
   push:
     branches:
-      - develop # TODO -> create production after PoC
+      - develop # TODO -> after passing PoC, create production workflow
 
 jobs:
   build-and-push:

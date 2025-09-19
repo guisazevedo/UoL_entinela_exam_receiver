@@ -106,4 +106,4 @@ Sentinela Exam Receiver is a backend service written in Rust for ingesting and p
 
 ---
 
-© SwissAnalytica — All rights reserved.
+© swissanalytica — All rights reserved.
