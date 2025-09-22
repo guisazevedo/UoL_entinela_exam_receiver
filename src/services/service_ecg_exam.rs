@@ -220,8 +220,14 @@ async fn send_to_pubsub(data: serde_json::Value, pubsub_client: &Arc<PubSubClien
         ordering_key: "".to_string(),
     };
 
+    // DEBUG
+    println!("PubSub message payload: {}", payload);
+
     // STEP 5: Publish the message
     publisher.publish(message).await;
+
+    // DEBUG
+    println!("Published to PubSub topics: {}", topic_name);
 
     Ok(())
 }
@@ -325,4 +331,3 @@ mod tests {
         chrono::NaiveDateTime::parse_from_str(ts_no_z, fmt).expect("timestamp matches custom fmt");
     }
 }
-
