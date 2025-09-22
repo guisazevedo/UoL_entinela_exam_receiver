@@ -6,7 +6,7 @@ use google_cloud_googleapis::pubsub::v1::PubsubMessage;
 use google_cloud_pubsub::client::Client as PubSubClient;
 use google_cloud_storage::client::Client as GcsClient;
 use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
-use log::info;
+use log::{error, info};
 use polars::io::json::JsonReader;
 use polars::io::parquet::{ParquetWriter, ZstdLevel};
 use polars::prelude::*;
@@ -220,14 +220,13 @@ async fn send_to_pubsub(data: serde_json::Value, pubsub_client: &Arc<PubSubClien
         ordering_key: "".to_string(),
     };
 
-    // DEBUG
-    println!("PubSub message payload: {}", payload);
-
     // STEP 5: Publish the message
-    publisher.publish(message).await;
-
-    // DEBUG
-    println!("Published to PubSub topic: {}", topic_name);
+    let awaiter = publisher.publish(message).await;
+    let result = awaiter.get().await;
+    match result {
+        Ok(message_id) => info!("✅ Published with message ID: {:?}", message_id),
+        Err(e) => error!("❌ Failed to publish: {:?}", e),
+    }
 
     Ok(())
 }
