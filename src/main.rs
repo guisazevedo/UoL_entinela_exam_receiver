@@ -83,4 +83,3 @@ async fn init_pubsub_client() -> Result<Arc<PubSubClient>, Box<dyn std::error::E
     let pubsub_client = PubSubClient::new(pubsub_config).await?;
     Ok(Arc::new(pubsub_client))
 }
-

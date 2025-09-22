@@ -1,3 +1,4 @@
+use actix_web::http::header::map;
 // Imports *****************************************************************************************
 // External Crates
 use anyhow::Result;
@@ -220,14 +221,13 @@ async fn send_to_pubsub(data: serde_json::Value, pubsub_client: &Arc<PubSubClien
         ordering_key: "".to_string(),
     };
 
-    // DEBUG
-    println!("PubSub message payload: {}", payload);
-
     // STEP 5: Publish the message
-    publisher.publish(message).await;
-
-    // DEBUG
-    println!("Published to PubSub topics: {}", topic_name);
+    let awaiter = publisher.publish(message).await;
+    let result = awaiter.get().await;
+    match result {
+        Ok(message_id) => println!("✅ Published with message ID: {:?}", message_id),
+        Err(e) => println!("❌ Failed to publish: {:?}", e),
+    }
 
     Ok(())
 }
