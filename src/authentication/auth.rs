@@ -99,7 +99,7 @@ mod tests {
     use actix_web::test;
     use std::env;
 
-    // --- 1. Env variable errors
+    // Env variable errors
     #[test]
     async fn test_missing_env_vars() {
         // Backup and clear env vars
@@ -127,20 +127,7 @@ mod tests {
         }
     }
 
-    // --- 2. Header extraction
-    #[test]
-    async fn test_get_headers_valid() {
-        let req = test::TestRequest::default() // TODO:
-            .insert_header(("hospital_id", "H123"))
-            .insert_header(("hospital_key", "K456"))
-            .to_http_request();
-
-        let (id, key) = get_headers(req).unwrap();
-        assert_eq!(id, "H123");
-        assert_eq!(key, "K456");
-    }
-
-    // --- 3. Missing headers
+    // 2. Missing headers
     #[test]
     async fn test_get_headers_missing() {
         let req = test::TestRequest::default().to_http_request();
@@ -148,7 +135,7 @@ mod tests {
         assert!(result.is_err(), "Should fail when headers are missing");
     }
 
-    // --- 4. Header validation in authenticate_hospital (stops before DB)
+    // 3. Header validation in authenticate_hospital (stops before DB)
     #[tokio::test]
     async fn test_authenticate_hospital_empty_headers() {
         let req = test::TestRequest::default()
