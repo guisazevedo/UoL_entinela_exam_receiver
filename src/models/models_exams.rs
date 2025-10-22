@@ -1,11 +1,11 @@
 // Imports *****************************************************************************************
 // External Crates
-use serde::{Deserialize, Serialize};
-use validator::{Validate, ValidationError};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use image::ImageReader;
+use serde::{Deserialize, Serialize};
 use std::io::Cursor;
+use validator::{Validate, ValidationError};
 
 // Internal Modules
 
@@ -37,7 +37,7 @@ pub const ECG_LEAD_LENGTH: usize = 5000; // Length of each ECG lead
 /// * A Payload struct containing the data of the ECG exam
 pub struct PayloadEcg {
     // Patient id as a string - SHA256 hash
-    #[validate(custom(function = "validate_sha256"))]
+    #[validate(custom(function = "validate_patient_id"))]
     pub patient_id: String,
 
     // Hospital id as a string - SHA256 hash
@@ -108,16 +108,27 @@ pub struct PayloadXray {
     pub image: String,
 }
 
-
 // SUPPORTING FUNCTIONS ****************************************************************************
 /// Custom validation function for SHA256 hash
 /// # Arguments
 /// * `patient_id` - A string representing the patient id
 /// # Returns
 /// * A Result containing a unit type or a ValidationError
-fn validate_sha256(patient_id: &str) -> Result<(), ValidationError> {
-    if patient_id.len() != 64 || !patient_id.chars().all(|c| c.is_ascii_hexdigit()) {
-        Err(ValidationError::new("Patient_id must be a valid SHA256 hash"))
+fn validate_sha256(sha256: &str) -> Result<(), ValidationError> {
+    if sha256.len() != 64 || !sha256.chars().all(|c| c.is_ascii_hexdigit()) {
+        Err(ValidationError::new(
+            "Patient_id must be a valid SHA256 hash",
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+// Custom validation for patient id
+// #
+fn validate_patient_id(patient_id: &str) -> Result<(), ValidationError> {
+    if patient_id.is_empty() || patient_id.len() > 100 {
+        return Err(ValidationError::new("Invalid patient ID length"));
     } else {
         Ok(())
     }
@@ -131,16 +142,22 @@ fn validate_sha256(patient_id: &str) -> Result<(), ValidationError> {
 fn validate_ecg_leads(values: &[f32]) -> Result<(), ValidationError> {
     // Check if the length of the leads is exactly ECG_LEAD_LENGTH samples
     if values.len() != ECG_LEAD_LENGTH {
-        return Err(ValidationError::new("Leads must contain exactly ECG_LEAD_LENGTH samples"));
+        return Err(ValidationError::new(
+            "Leads must contain exactly ECG_LEAD_LENGTH samples",
+        ));
     }
     // Check if the values are within the valid range
     let max_amplitude = 2.0;
     if values.iter().any(|&v| v.abs() > max_amplitude) {
-        return Err(ValidationError::new("Leads values must be between -2.0 and 2.0"));
+        return Err(ValidationError::new(
+            "Leads values must be between -2.0 and 2.0",
+        ));
     }
     // Check if the patient is not flat-line
     if values.iter().all(|&v| v == 0.0) {
-        return Err(ValidationError::new("Leads cannot be flat-line (all values are zero)"));
+        return Err(ValidationError::new(
+            "Leads cannot be flat-line (all values are zero)",
+        ));
     }
     Ok(())
 }
@@ -153,7 +170,9 @@ fn validate_ecg_leads(values: &[f32]) -> Result<(), ValidationError> {
 fn validate_1024_base64_image(base64_str: &str) -> Result<(), ValidationError> {
     const IMAGE_SIZE: u32 = 1024;
     // Bring it to raw bytes
-    let decoded = STANDARD.decode(base64_str).map_err(|_| ValidationError::new("invalid_base64"))?;
+    let decoded = STANDARD
+        .decode(base64_str)
+        .map_err(|_| ValidationError::new("invalid_base64"))?;
     // read the image from the raw bytes
     let img = ImageReader::new(Cursor::new(decoded))
         .with_guessed_format()
@@ -167,7 +186,6 @@ fn validate_1024_base64_image(base64_str: &str) -> Result<(), ValidationError> {
         Err(ValidationError::new("invalid_dimensions"))
     }
 }
-
 
 // TESTS *******************************************************************************************
 #[cfg(test)]
@@ -189,7 +207,9 @@ mod tests {
     /// Generates a vector of f32 with the specified length, initializing the first element
     fn lead_with(len: usize, first: f32) -> Vec<f32> {
         let mut v = vec![0.0; len];
-        if len > 0 { v[0] = first; }
+        if len > 0 {
+            v[0] = first;
+        }
         v
     }
 
@@ -345,3 +365,4 @@ mod tests {
         assert!(res.is_err());
     }
 }
+

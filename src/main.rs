@@ -14,9 +14,11 @@ use log::info;
 use std::sync::Arc;
 
 // Internal Modules
+mod authentication;
 mod models;
 mod routes;
 mod services;
+mod utils;
 
 // Global variables ********************************************************************************
 // Connection Constants
@@ -34,7 +36,7 @@ async fn main() -> std::io::Result<()> {
     // Initialize logger
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-    info!("Starting the ActixWeb server: SENTINELA EXAM GATEWAY");
+    info!("Starting the ActixWeb server: SENTINELA EXAM RECEIVER");
 
     // Initialize GCP clients once
     // GCS Client
