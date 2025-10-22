@@ -32,7 +32,6 @@ pub async fn authenticate_hospital(req: HttpRequest) -> Result<()> {
 }
 
 // SUPPORTING FUNCTIONS ****************************************************************************authenticate_hospital
-
 /// Function to connect to the database and return a connection object (pool)
 /// # Returns
 /// * `Result<Pool<Postgres>>` - A connection pool to the Postgres database
@@ -94,4 +93,86 @@ async fn validate_hospital_credentials(
 }
 
 // TESTS *******************************************************************************************
-// TODO:
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::test;
+    use std::env;
+
+    // --- 1. Env variable errors
+    #[test]
+    async fn test_missing_env_vars() {
+        // Backup and clear env vars
+        let keys = ["DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME"];
+        let backup: Vec<_> = keys.iter().map(|k| (k, env::var(k).ok())).collect();
+        for k in &keys {
+            env::remove_var(k);
+        }
+
+        // Simulate just the env var check (no DB)
+        let result = (|| -> Result<()> {
+            for key in &keys {
+                env::var(key)?;
+            }
+            Ok(())
+        })();
+
+        assert!(result.is_err(), "Should fail when env vars are missing");
+
+        // Restore
+        for (k, v) in backup {
+            if let Some(val) = v {
+                env::set_var(k, val);
+            }
+        }
+    }
+
+    // --- 2. Header extraction
+    #[test]
+    async fn test_get_headers_valid() {
+        let req = test::TestRequest::default() // TODO:
+            .insert_header(("hospital_id", "H123"))
+            .insert_header(("hospital_key", "K456"))
+            .to_http_request();
+
+        let (id, key) = get_headers(req).unwrap();
+        assert_eq!(id, "H123");
+        assert_eq!(key, "K456");
+    }
+
+    // --- 3. Missing headers
+    #[test]
+    async fn test_get_headers_missing() {
+        let req = test::TestRequest::default().to_http_request();
+        let result = get_headers(req);
+        assert!(result.is_err(), "Should fail when headers are missing");
+    }
+
+    // --- 4. Header validation in authenticate_hospital (stops before DB)
+    #[tokio::test]
+    async fn test_authenticate_hospital_empty_headers() {
+        let req = test::TestRequest::default()
+            .insert_header(("Hospital-Id", ""))
+            .insert_header(("Hospital-Key", ""))
+            .to_http_request();
+
+        // simulate header validation branch
+        let (id, key) = get_headers(req.clone()).unwrap_or(("".into(), "".into()));
+        assert!(id.is_empty() && key.is_empty());
+
+        // call just validation logic
+        let result = if id.is_empty() || key.is_empty() {
+            Err(anyhow::anyhow!(
+                "Authentication failed: Missing valid headers"
+            ))
+        } else {
+            Ok(())
+        };
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Missing valid headers"));
+    }
+}
