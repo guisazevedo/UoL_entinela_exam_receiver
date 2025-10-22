@@ -20,3 +20,5 @@ google-cloud-pubsub = "0.18"
 google-cloud-googleapis = "=0.10.0"
 base64 = "0.22.1"
 image = "0.25.6"
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres"] }
+
