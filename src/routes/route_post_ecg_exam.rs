@@ -32,10 +32,10 @@ pub async fn ecg_exam_handler(
 
     // Prep: Authenticate hospital
     // If authentication fails, an error response is returned, else processing continues
-    if let Err(e) = authenticate_hospital(req) {
+    if let Err(e) = authenticate_hospital(req).await {
         error!("Authentication error - ECG Exam: {}", e);
-        return Ok(HttpResponse::Unauthorized().json(json!({ "error": "Unauthorized" })));
-    }
+        return Ok(HttpResponse::Unauthorized().json(json!({ "error": e.to_string() })));
+    };
 
     // STEP 1: Validate the payload
     if let Err(e) = payload.validate() {
@@ -59,4 +59,3 @@ pub async fn ecg_exam_handler(
 
 // TESTS *******************************************************************************************
 // DOCUMENTATION: Pass function only - no unit tests for route handlers
-
