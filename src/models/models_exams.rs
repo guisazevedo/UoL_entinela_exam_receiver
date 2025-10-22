@@ -45,7 +45,7 @@ pub struct PayloadEcg {
     pub hospital_id: String,
 
     // Hospital key as a string - SHA256 hash
-    #[validate(custom(function = "validate_sha256"))]
+    #[validate(length(equal = 100))]
     pub hospital_key: String,
 
     // Lead I should be valid by custom validation function
@@ -365,4 +365,3 @@ mod tests {
         assert!(res.is_err());
     }
 }
-
